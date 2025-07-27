@@ -20,7 +20,7 @@ struct ContentView: View {
     
     // DeviceActivity and ManagedSettings stores
     private let deviceActivityCenter = DeviceActivityCenter()
-    private let managedSettings = ManagedSettingsStore()
+    private let managedSettings = ManagedSettingsStore(named: .init("SecondThoughtStore"))
     
     var body: some View {
         VStack {
@@ -186,7 +186,31 @@ struct ContentView: View {
     
     // Get ApplicationToken for a URL scheme
     private func getApplicationToken(for urlScheme: String) -> ApplicationToken? {
-        // Return the first available ApplicationToken from the selection
+        guard let bundleID = getBundleIdentifier(from: urlScheme) else {
+            print("⚠️  No bundle ID found for URL scheme: \(urlScheme)")
+            return nil
+        }
+        
+        print("🔍 SEARCHING for token with bundle ID: \(bundleID)")
+        print("  Available applications: \(selectedApps.applications.count)")
+        print("  Available tokens: \(selectedApps.applicationTokens.count)")
+        
+        // Try to find matching application first
+        for (index, application) in selectedApps.applications.enumerated() {
+            print("  App \(index): \(application.bundleIdentifier ?? "unknown")")
+            if application.bundleIdentifier == bundleID {
+                print("✅ FOUND matching application at index \(index)")
+                // Get corresponding token at same index
+                let tokens = Array(selectedApps.applicationTokens)
+                if index < tokens.count {
+                    print("✅ RETURNING token at index \(index)")
+                    return tokens[index]
+                }
+            }
+        }
+        
+        print("❌ NO MATCHING TOKEN found for bundle ID: \(bundleID)")
+        print("   Falling back to first available token")
         return selectedApps.applicationTokens.first
     }
     
@@ -198,13 +222,17 @@ struct ContentView: View {
         }
         
         print("📱 STARTING 20-second monitoring for: \(urlScheme)")
+        print("  Using token: \(token)")
+        print("  Timer will fire in 20 seconds at: \(Date(timeIntervalSinceNow: 20))")
         
         // Start 20-second timer to block the app
         DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
+            print("⏰ 20-SECOND TIMER FIRED at: \(Date())")
             self.blockAppWithToken(token: token)
             
             // Optional: Unblock after some time (e.g., 10 minutes)
             DispatchQueue.main.asyncAfter(deadline: .now() + 600) {
+                print("⏰ 10-MINUTE TIMER FIRED at: \(Date())")
                 self.unblockAllApps()
             }
         }
@@ -212,9 +240,38 @@ struct ContentView: View {
     
     // Block app using ApplicationToken
     private func blockAppWithToken(token: ApplicationToken) {
-        print("🚫 BLOCKING app with token")
-        managedSettings.shield.applications = Set([token])
-        print("  App blocked successfully")
+        // First check authorization status
+        let authStatus = AuthorizationCenter.shared.authorizationStatus
+        print("🚫 BLOCKING app with token: \(token)")
+        print("  Authorization status: \(authStatus)")
+        
+        guard authStatus == .approved else {
+            print("  ❌ ERROR: Not authorized for Family Controls (status: \(authStatus))")
+            return
+        }
+        
+        print("  Current shield settings before: \(managedSettings.shield.applications?.count ?? 0) apps")
+        
+        do {
+            managedSettings.shield.applications = Set([token])
+            print("  ✅ Shield settings applied successfully")
+        } catch {
+            print("  ❌ ERROR applying shield settings: \(error)")
+            return
+        }
+        
+        print("  Current shield settings after: \(managedSettings.shield.applications?.count ?? 0) apps")
+        
+        // Verify the setting was applied
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+            let currentShield = self.managedSettings.shield.applications
+            print("  ✅ VERIFICATION: Shield contains \(currentShield?.count ?? 0) apps")
+            if let shielded = currentShield {
+                for app in shielded {
+                    print("    Shielded app token: \(app)")
+                }
+            }
+        }
     }
     
     // Unblock all apps
