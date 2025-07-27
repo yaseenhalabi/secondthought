@@ -12,13 +12,15 @@ struct ActivateSecondThoughtIntent: AppIntent {
     
     func perform() async throws -> some IntentResult {
         let currentScheme = UserDefaults.standard.string(forKey: "selectedAppScheme") ?? ""
-        let lastUpdated = UserDefaults.standard.double(forKey: "schemeLastUpdated")
+        let timestampKey = "schemeLastUpdated_\(urlScheme)"
+        let lastUpdated = UserDefaults.standard.double(forKey: timestampKey)
         let now = Date().timeIntervalSince1970
         let timeSinceUpdate = now - lastUpdated
         let cooldownPeriod: Double = 10.0 // 10 seconds
         
         print("🔵 INTENT START:")
         print("  Input urlScheme: '\(urlScheme)'")
+        print("  Per-app timestamp key: '\(timestampKey)'")
         print("  Current scheme in UserDefaults: '\(currentScheme)'")
         print("  Last updated timestamp: \(lastUpdated)")
         print("  Current timestamp: \(now)")
@@ -38,9 +40,9 @@ struct ActivateSecondThoughtIntent: AppIntent {
         if shouldUpdate {
             print("🟢 PROCEEDING - Saving URL scheme: \(urlScheme)")
             UserDefaults.standard.set(urlScheme, forKey: "selectedAppScheme")
-            UserDefaults.standard.set(now, forKey: "schemeLastUpdated")
+            UserDefaults.standard.set(now, forKey: timestampKey)
             print("  Saved scheme: '\(urlScheme)'")
-            print("  Saved timestamp: \(now)")
+            print("  Saved timestamp: \(now) to key: '\(timestampKey)'")
             
             do {
                 print("  Calling continueInForeground...")
