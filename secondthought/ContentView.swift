@@ -8,20 +8,47 @@
 import SwiftUI
 import DeviceActivity
 import FamilyControls
+import ManagedSettings
 
 struct ContentView: View {
     @State private var showContinueScreen = false
     @State private var urlScheme = ""
     @State private var hasRequestedPermissions = false
+    @State private var showAppSelector = false
+    @State private var selectedApps = FamilyActivitySelection()
+    @State private var hasConfiguredApps = false
+    
+    // DeviceActivity and ManagedSettings stores
+    private let deviceActivityCenter = DeviceActivityCenter()
+    private let managedSettings = ManagedSettingsStore()
     
     var body: some View {
         VStack {
-            if showContinueScreen {
-                ContinueScreen(urlScheme: urlScheme)
+            if showAppSelector {
+                AppSelectorView(selectedApps: $selectedApps) {
+                    saveSelectedApps()
+                    showAppSelector = false
+                    hasConfiguredApps = true
+                }
+            } else if showContinueScreen {
+                ContinueScreen(urlScheme: urlScheme, onAppOpened: startAppMonitoring)
             } else {
-                Text("Second thought")
-                    .font(.largeTitle)
-                    .padding()
+                VStack(spacing: 20) {
+                    Text("Second thought")
+                        .font(.largeTitle)
+                        .padding()
+                    
+                    if !hasConfiguredApps {
+                        Button("Configure Apps") {
+                            showAppSelector = true
+                        }
+                        .font(.title2)
+                        .padding()
+                        .background(Color.green)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                    }
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
@@ -29,6 +56,7 @@ struct ContentView: View {
         }
         .onAppear {
             requestPermissionsIfNeeded()
+            checkIfAppsConfigured()
         }
     }
     
@@ -103,15 +131,112 @@ struct ContentView: View {
         print("❌ DeviceActivity API not available - limited functionality")
         // Future: Show user message about limited functionality
     }
+    
+    // Map URL schemes to bundle identifiers
+    private func getBundleIdentifier(from urlScheme: String) -> String? {
+        let schemeMapping: [String: String] = [
+            "instagram://": "com.burbn.instagram",
+            "snapchat://": "com.toyopagroup.picaboo",
+            "tiktok://": "com.zhiliaoapp.musically",
+            "youtube://": "com.google.ios.youtube",
+            "twitter://": "com.atebits.Tweetie2",
+            "facebook://": "com.facebook.Facebook",
+            "whatsapp://": "net.whatsapp.WhatsApp",
+            "spotify://": "com.spotify.client",
+            "reddit://": "com.reddit.Reddit"
+        ]
+        return schemeMapping[urlScheme]
+    }
+    
+    
+    // Check if apps are configured
+    private func checkIfAppsConfigured() {
+        hasConfiguredApps = UserDefaults.standard.bool(forKey: "hasConfiguredApps")
+        if hasConfiguredApps {
+            loadSelectedApps()
+        }
+    }
+    
+    // Save selected apps to UserDefaults
+    private func saveSelectedApps() {
+        print("📱 SAVING selected apps:")
+        print("  Selected applications count: \(selectedApps.applications.count)")
+        
+        // Save the selection to UserDefaults using encoded data
+        if let encoded = try? JSONEncoder().encode(selectedApps) {
+            UserDefaults.standard.set(encoded, forKey: "selectedApps")
+            UserDefaults.standard.set(true, forKey: "hasConfiguredApps")
+            print("  Apps saved successfully")
+        } else {
+            print("  ERROR: Failed to save selected apps")
+        }
+    }
+    
+    // Load selected apps from UserDefaults
+    private func loadSelectedApps() {
+        guard let data = UserDefaults.standard.data(forKey: "selectedApps"),
+              let decoded = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) else {
+            print("  No saved app selection found")
+            return
+        }
+        
+        selectedApps = decoded
+        print("📱 LOADED selected apps: \(selectedApps.applications.count) applications")
+    }
+    
+    // Get ApplicationToken for a URL scheme
+    private func getApplicationToken(for urlScheme: String) -> ApplicationToken? {
+        // Return the first available ApplicationToken from the selection
+        return selectedApps.applicationTokens.first
+    }
+    
+    // Start monitoring an app for 20 seconds
+    private func startAppMonitoring(for urlScheme: String) {
+        guard let token = getApplicationToken(for: urlScheme) else {
+            print("⚠️  No application token found for URL scheme: \(urlScheme)")
+            return
+        }
+        
+        print("📱 STARTING 20-second monitoring for: \(urlScheme)")
+        
+        // Start 20-second timer to block the app
+        DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
+            self.blockAppWithToken(token: token)
+            
+            // Optional: Unblock after some time (e.g., 10 minutes)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 600) {
+                self.unblockAllApps()
+            }
+        }
+    }
+    
+    // Block app using ApplicationToken
+    private func blockAppWithToken(token: ApplicationToken) {
+        print("🚫 BLOCKING app with token")
+        managedSettings.shield.applications = Set([token])
+        print("  App blocked successfully")
+    }
+    
+    // Unblock all apps
+    private func unblockAllApps() {
+        print("✅ UNBLOCKING all apps")
+        managedSettings.shield.applications = nil
+        print("  All apps unblocked successfully")
+    }
 }
 
 struct ContinueScreen: View {
     let urlScheme: String
+    let onAppOpened: (String) -> Void
     
     var body: some View {
         VStack(spacing: 30) {
             Text("Ready to continue?")
                 .font(.title)
+            
+            Text("You'll have 20 seconds before the app is blocked")
+                .font(.caption)
+                .foregroundColor(.secondary)
             
             Button("Continue") {
                 openApp()
@@ -140,6 +265,9 @@ struct ContinueScreen: View {
             await UIApplication.shared.open(url)
             print("  UIApplication.open completed")
             
+            // Start 20-second monitoring for app blocking
+            onAppOpened(urlScheme)
+            
             // Set a brief cooldown to prevent immediate re-triggering
             let now = Date().timeIntervalSince1970
             let timestampKey = "schemeLastUpdated_\(urlScheme)"
@@ -147,6 +275,38 @@ struct ContinueScreen: View {
             print("  Set cooldown timestamp after opening app: \(now) to key: '\(timestampKey)'")
         }
         print("🟠 CONTINUE BUTTON END\n")
+    }
+}
+
+struct AppSelectorView: View {
+    @Binding var selectedApps: FamilyActivitySelection
+    let onComplete: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Text("Select Apps to Monitor")
+                .font(.title)
+                .padding()
+            
+            Text("Choose the apps you want Second Thought to monitor and block after 20 seconds")
+                .font(.body)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
+            FamilyActivityPicker(selection: $selectedApps)
+                .frame(height: 400)
+            
+            Button("Save Selection") {
+                onComplete()
+            }
+            .font(.title2)
+            .padding()
+            .background(selectedApps.applications.isEmpty ? Color.gray : Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(10)
+            .disabled(selectedApps.applications.isEmpty)
+        }
+        .padding()
     }
 }
 
