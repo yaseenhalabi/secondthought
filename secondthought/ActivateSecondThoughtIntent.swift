@@ -1,65 +1,59 @@
-import Foundation
 import AppIntents
 import SwiftUI
 import UIKit
 
-struct AppToOpen: @preconcurrency AppEntity {
-    var id: UUID
-    var name: String = ""
-    var urlScheme: String = ""
+struct ActivateSecondThoughtIntent: AppIntent {
+    static var title: LocalizedStringResource = "Activate Second Thought"
+    static var description = IntentDescription("Activate Second Thought for an app")
+    static var supportedModes: IntentModes = [.background, .foreground(.dynamic)]
     
-    static var typeDisplayRepresentation: TypeDisplayRepresentation {
-        TypeDisplayRepresentation(name: "App to open")
-    }
-    
-    var displayRepresentation: DisplayRepresentation {
-        DisplayRepresentation(title: "\(name)")
-    }
-    
-    static var defaultQuery = AppToOpenQuery()
-}
-
-@preconcurrency
-struct AppToOpenQuery: EntityQuery {
-    func entities(for identifiers: [AppToOpen.ID]) async throws -> [AppToOpen] {
-        return []
-    }
-    
-    func suggestedEntities() async throws -> [AppToOpen] {
-        return []
-    }
-}
-
-struct ActivateSecondThoughtIntent: @preconcurrency AppIntent {
-    static var title: LocalizedStringResource = "Open App"
-    static var description = IntentDescription("Open a popular app from your device")
-    static var supportedModes: IntentModes =  [.background, .foreground(.dynamic)]
-    
-    @Parameter(title: "App Name", description: "Choose which app to open")
-    var appToOpen: AppToOpen
+    @Parameter(title: "URL Scheme", description: "Enter the app's URL scheme (e.g. instagram://)")
+    var urlScheme: String
     
     func perform() async throws -> some IntentResult {
-        guard let url = URL(string: appToOpen.urlScheme) else {
-            return .result()
-        }
+        let currentScheme = UserDefaults.standard.string(forKey: "selectedAppScheme") ?? ""
+        let lastUpdated = UserDefaults.standard.double(forKey: "schemeLastUpdated")
+        let now = Date().timeIntervalSince1970
+        let timeSinceUpdate = now - lastUpdated
+        let cooldownPeriod: Double = 10.0 // 10 seconds
         
-        let canOpen = UIApplication.shared.canOpenURL(url)
+        print("🔵 INTENT START:")
+        print("  Input urlScheme: '\(urlScheme)'")
+        print("  Current scheme in UserDefaults: '\(currentScheme)'")
+        print("  Last updated timestamp: \(lastUpdated)")
+        print("  Current timestamp: \(now)")
+        print("  Time since update: \(timeSinceUpdate) seconds")
+        print("  Cooldown period: \(cooldownPeriod) seconds")
         
-        if canOpen {
-            print("Opening \(appToOpen.urlScheme) with URL scheme: \(appToOpen.urlScheme)")
-            await UIApplication.shared.open(url)
-            
-            UserDefaults().set(true, forKey: "showContinueScreen")
+        // Simple logic: Allow first-time use OR require cooldown for subsequent uses
+        let isFirstTime = lastUpdated == 0.0
+        let cooldownPassed = timeSinceUpdate > cooldownPeriod
+        
+        print("  Is first time (timestamp = 0): \(isFirstTime)")
+        print("  Cooldown passed: \(cooldownPassed)")
+        
+        let shouldUpdate = isFirstTime || cooldownPassed
+        print("  Should update: \(shouldUpdate)")
+        
+        if shouldUpdate {
+            print("🟢 PROCEEDING - Saving URL scheme: \(urlScheme)")
+            UserDefaults.standard.set(urlScheme, forKey: "selectedAppScheme")
+            UserDefaults.standard.set(now, forKey: "schemeLastUpdated")
+            print("  Saved scheme: '\(urlScheme)'")
+            print("  Saved timestamp: \(now)")
             
             do {
+                print("  Calling continueInForeground...")
                 try await continueInForeground(alwaysConfirm: false)
+                print("  continueInForeground completed")
             } catch {
-                print("Couldn't bring app to foreground after opening \(appToOpen.urlScheme)")
+                print("  ERROR: Couldn't bring app to foreground: \(error)")
             }
-            
-            return .result()
         } else {
-            return .result()
+            print("🔴 BLOCKED - Skipping due to cooldown")
         }
+        
+        print("🔵 INTENT END\n")
+        return .result()
     }
 }
