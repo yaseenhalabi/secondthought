@@ -526,10 +526,32 @@ struct ContentView: View {
     
     // Save learned mappings to persistence
     private func saveLearnedMappings() {
+        print("💾 === SAVING LEARNED MAPPINGS ===")
+        print("  Mappings to save: \(learnedSchemeToTokenMapping.count)")
+        for (scheme, token) in learnedSchemeToTokenMapping {
+            print("    \(scheme) -> \(token)")
+        }
+        
         if let mappingData = try? JSONEncoder().encode(learnedSchemeToTokenMapping) {
             UserDefaults.standard.set(mappingData, forKey: "learnedSchemeToTokenMapping")
-            print("💾 SAVED learned mappings: \(learnedSchemeToTokenMapping.count) mappings")
+            print("  ✅ Saved to UserDefaults key: 'learnedSchemeToTokenMapping'")
+            print("  📊 Data size: \(mappingData.count) bytes")
+            
+            // Verify the save worked
+            if let verifyData = UserDefaults.standard.data(forKey: "learnedSchemeToTokenMapping") {
+                print("  ✅ VERIFICATION: Data exists in UserDefaults, size: \(verifyData.count) bytes")
+                if let verifyMappings = try? JSONDecoder().decode([String: ApplicationToken].self, from: verifyData) {
+                    print("  ✅ VERIFICATION: Can decode \(verifyMappings.count) mappings")
+                } else {
+                    print("  ❌ VERIFICATION: Cannot decode saved data")
+                }
+            } else {
+                print("  ❌ VERIFICATION: No data found after save")
+            }
+        } else {
+            print("  ❌ ERROR: Failed to encode learned mappings")
         }
+        print("💾 === SAVE LEARNED MAPPINGS END ===")
     }
     
     // Start monitoring an app for 10 seconds

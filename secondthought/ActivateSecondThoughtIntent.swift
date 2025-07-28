@@ -102,10 +102,44 @@ struct ActivateSecondThoughtIntent: AppIntent {
     
     // Get application token for URL scheme using learned mappings
     private func getApplicationTokenForScheme(_ urlScheme: String) -> ApplicationToken? {
-        // Load learned mappings
-        guard let mappingData = UserDefaults.standard.data(forKey: "learnedSchemeToTokenMapping"),
-              let learnedMappings = try? JSONDecoder().decode([String: ApplicationToken].self, from: mappingData) else {
-            print("  ❌ No learned mappings found")
+        print("  🔍 DEBUGGING UserDefaults in intent context:")
+        
+        // Check all relevant keys that should exist
+        let keysToCheck = [
+            "learnedSchemeToTokenMapping",
+            "blockedAppTokens", 
+            "selectedApps",
+            "hasConfiguredApps",
+            "directSchemeToTokenMapping", // Legacy key
+            "activeSchemeToTokenMapping"
+        ]
+        
+        for key in keysToCheck {
+            let exists = UserDefaults.standard.object(forKey: key) != nil
+            let dataSize = UserDefaults.standard.data(forKey: key)?.count ?? 0
+            print("    Key '\(key)': exists=\(exists), dataSize=\(dataSize) bytes")
+        }
+        
+        // Try to load learned mappings
+        guard let mappingData = UserDefaults.standard.data(forKey: "learnedSchemeToTokenMapping") else {
+            print("  ❌ No data found for key 'learnedSchemeToTokenMapping'")
+            
+            // Try alternative keys as fallback
+            print("  🔄 Trying alternative keys...")
+            if let altData = UserDefaults.standard.data(forKey: "activeSchemeToTokenMapping") {
+                print("  📁 Found data in 'activeSchemeToTokenMapping', trying that...")
+                if let learnedMappings = try? JSONDecoder().decode([String: ApplicationToken].self, from: altData) {
+                    print("  ✅ Successfully decoded from alternative key")
+                    return learnedMappings[urlScheme]
+                }
+            }
+            
+            return nil
+        }
+        
+        guard let learnedMappings = try? JSONDecoder().decode([String: ApplicationToken].self, from: mappingData) else {
+            print("  ❌ Failed to decode learned mappings data")
+            print("  📊 Raw data size: \(mappingData.count) bytes")
             return nil
         }
         
