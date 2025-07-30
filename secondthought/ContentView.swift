@@ -10,6 +10,20 @@ import DeviceActivity
 import FamilyControls
 import ManagedSettings
 
+enum TimingMode: String, CaseIterable {
+    case defaultMode = "default"
+    case randomMode = "random"
+    
+    var displayName: String {
+        switch self {
+        case .defaultMode:
+            return "Default Mode (10 seconds)"
+        case .randomMode:
+            return "Random Mode (1-10 seconds)"
+        }
+    }
+}
+
 struct ContentView: View {
     @State private var showContinueScreen = false
     @State private var urlScheme = ""
@@ -18,6 +32,7 @@ struct ContentView: View {
     @State private var selectedApps = FamilyActivitySelection()
     @State private var hasConfiguredApps = false
     @State private var learnedSchemeToTokenMapping: [String: ApplicationToken] = [:]
+    @State private var timingMode: TimingMode = .defaultMode
     
     // App state management
     @State private var activeTimers: [String: [DispatchWorkItem]] = [:]
@@ -38,12 +53,39 @@ struct ContentView: View {
                     hasConfiguredApps = true
                 }
             } else if showContinueScreen {
-                ContinueScreen(urlScheme: urlScheme, onAppOpened: startAppMonitoring)
+                ContinueScreen(urlScheme: urlScheme, timingMode: timingMode, onAppOpened: startAppMonitoring)
             } else {
                 VStack(spacing: 20) {
                     Text("Second thought")
                         .font(.largeTitle)
                         .padding()
+                    
+                    if hasConfiguredApps {
+                        VStack(spacing: 15) {
+                            Text("Timing Mode")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            Picker("Timing Mode", selection: $timingMode) {
+                                ForEach(TimingMode.allCases, id: \.self) { mode in
+                                    Text(mode.displayName).tag(mode)
+                                }
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                            .padding(.horizontal)
+                            .onChange(of: timingMode) { _ in
+                                saveTimingMode()
+                            }
+                            
+                            Text("Current mode: \(timingMode.displayName)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding()
+                        .background(Color(.systemGray6))
+                        .cornerRadius(12)
+                        .padding(.horizontal)
+                    }
                     
                     if !hasConfiguredApps {
                         Button("Configure Apps") {
@@ -65,6 +107,7 @@ struct ContentView: View {
             requestPermissionsIfNeeded()
             checkIfAppsConfigured()
             restoreBlockingState()
+            loadTimingMode()
         }
     }
     
@@ -573,13 +616,27 @@ struct ContentView: View {
             existingTimers.forEach { $0.cancel() }
         }
         
-        print("📱 STARTING 10-second monitoring for: \(urlScheme)")
+        // Generate delay based on timing mode
+        let blockDelay: Double
+        let delayDescription: String
+        
+        switch timingMode {
+        case .defaultMode:
+            blockDelay = 10.0
+            delayDescription = "10.0 seconds (default mode)"
+        case .randomMode:
+            blockDelay = Double.random(in: 1.0...10.0)
+            delayDescription = "\(String(format: "%.1f", blockDelay)) seconds (random mode)"
+        }
+        
+        print("📱 STARTING monitoring for: \(urlScheme)")
         print("  Using token: \(token)")
-        print("  Timer will fire in 10 seconds at: \(Date(timeIntervalSinceNow: 10))")
+        print("  ⏱️ Block delay: \(delayDescription)")
+        print("  Timer will fire at: \(Date(timeIntervalSinceNow: blockDelay))")
         
         // Create block timer work item
         let blockWorkItem = DispatchWorkItem {
-            print("⏰ 10-SECOND TIMER FIRED at: \(Date())")
+            print("⏰ TIMER FIRED at: \(Date()) (was \(delayDescription))")
             print("  🔍 TIMER CONTEXT:")
             print("    Scheme: \(urlScheme)")
             print("    Timer thread: \(Thread.current)")
@@ -600,7 +657,7 @@ struct ContentView: View {
                     print("    \(scheme) -> \(token)")
                 }
             }
-            print("⏰ 10-SECOND TIMER WORK ITEM COMPLETED")
+            print("⏰ RANDOM TIMER WORK ITEM COMPLETED")
         }
         
         // Create unblock timer work item
@@ -630,18 +687,20 @@ struct ContentView: View {
         activeTimers[urlScheme] = [blockWorkItem, unblockWorkItem]
         print("  📝 STORED timer references for \(urlScheme)")
         
-        // Set expiration time (current time + 10 seconds for block + 600 seconds for unblock)
-        let expirationTime = Date().addingTimeInterval(610) // 10 + 600
+        // Set expiration time (current time + block delay + 600 seconds for unblock)
+        let totalExpirationTime = blockDelay + 600 // block delay + 10 minutes
+        let expirationTime = Date().addingTimeInterval(totalExpirationTime)
         blockExpirationTimes[urlScheme] = expirationTime
         print("  📅 SET expiration time for \(urlScheme): \(expirationTime)")
+        print("  📊 Total time until unblock: \(String(format: "%.1f", totalExpirationTime)) seconds")
         
         print("  🚀 SCHEDULING timers...")
-        print("    Block timer: now + 10 seconds")
-        print("    Unblock timer: now + 610 seconds")
+        print("    Block timer: now + \(String(format: "%.1f", blockDelay)) seconds")
+        print("    Unblock timer: now + \(String(format: "%.1f", totalExpirationTime)) seconds")
         
-        // Schedule timers
-        DispatchQueue.main.asyncAfter(deadline: .now() + 10, execute: blockWorkItem)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 610, execute: unblockWorkItem) // 10 + 600
+        // Schedule timers with configured delay
+        DispatchQueue.main.asyncAfter(deadline: .now() + blockDelay, execute: blockWorkItem)
+        DispatchQueue.main.asyncAfter(deadline: .now() + totalExpirationTime, execute: unblockWorkItem)
         
         print("  ✅ TIMERS SCHEDULED for \(urlScheme)")
         print("📱 START MONITORING COMPLETED for \(urlScheme)\n")
@@ -769,11 +828,39 @@ struct ContentView: View {
         
         print("  All apps unblocked successfully")
     }
+    
+    // Save timing mode to UserDefaults
+    private func saveTimingMode() {
+        UserDefaults.standard.set(timingMode.rawValue, forKey: "timingMode")
+        print("💾 TIMING MODE SAVED: \(timingMode.displayName)")
+    }
+    
+    // Load timing mode from UserDefaults
+    private func loadTimingMode() {
+        let savedMode = UserDefaults.standard.string(forKey: "timingMode") ?? TimingMode.defaultMode.rawValue
+        if let mode = TimingMode(rawValue: savedMode) {
+            timingMode = mode
+            print("📱 TIMING MODE LOADED: \(timingMode.displayName)")
+        } else {
+            timingMode = .defaultMode
+            print("📱 TIMING MODE DEFAULT: Using default mode")
+        }
+    }
 }
 
 struct ContinueScreen: View {
     let urlScheme: String
+    let timingMode: TimingMode
     let onAppOpened: (String) -> Void
+    
+    private var timingDescription: String {
+        switch timingMode {
+        case .defaultMode:
+            return "You'll have 10 seconds before it's blocked again."
+        case .randomMode:
+            return "You'll have 1-10 seconds (randomly) before it's blocked again."
+        }
+    }
     
     var body: some View {
         VStack(spacing: 30) {
@@ -781,7 +868,7 @@ struct ContinueScreen: View {
                 .font(.title)
                 .foregroundColor(.green)
             
-            Text("The app has been unblocked. You'll have 10 seconds before it's blocked again.")
+            Text("The app has been unblocked. \(timingDescription)")
                 .font(.body)
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
@@ -837,7 +924,7 @@ struct AppSelectorView: View {
                 .font(.title)
                 .padding()
             
-            Text("Choose the apps you want Second Thought to monitor and block after 10 seconds. The app will automatically learn which apps you select.")
+            Text("Choose the apps you want Second Thought to monitor and block. The app will automatically learn which apps you select, and you can adjust the timing mode on the home screen.")
                 .font(.body)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)
