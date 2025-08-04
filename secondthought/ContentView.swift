@@ -13,13 +13,16 @@ import ManagedSettings
 enum TimingMode: String, CaseIterable {
     case defaultMode = "default"
     case randomMode = "random"
+    case dynamicMode = "dynamic"
     
     var displayName: String {
         switch self {
         case .defaultMode:
-            return "Default Mode (10 seconds)"
+            return "Default Mode"
         case .randomMode:
-            return "Random Mode (1-10 seconds)"
+            return "Random Mode"
+        case .dynamicMode:
+            return "Dynamic Mode"
         }
     }
 }
@@ -33,6 +36,8 @@ struct ContentView: View {
     @State private var hasConfiguredApps = false
     @State private var learnedSchemeToTokenMapping: [String: ApplicationToken] = [:]
     @State private var timingMode: TimingMode = .defaultMode
+    @State private var codeLength: Int = 4
+    @State private var codeRegenerationTrigger: UUID = UUID()
     
     // App state management
     @State private var activeTimers: [String: [DispatchWorkItem]] = [:]
@@ -53,7 +58,9 @@ struct ContentView: View {
                     hasConfiguredApps = true
                 }
             } else if showContinueScreen {
-                ContinueScreen(urlScheme: urlScheme, timingMode: timingMode, onAppOpened: startAppMonitoring)
+                ContinueScreen(urlScheme: urlScheme, timingMode: timingMode, codeLength: codeLength, regenerationTrigger: codeRegenerationTrigger, onAppOpened: { scheme, customDelay in
+                    startAppMonitoring(for: scheme, customDelay: customDelay)
+                })
             } else {
                 VStack(spacing: 20) {
                     Text("Second thought")
@@ -71,13 +78,32 @@ struct ContentView: View {
                                     Text(mode.displayName).tag(mode)
                                 }
                             }
-                            .pickerStyle(SegmentedPickerStyle())
+                            .pickerStyle(MenuPickerStyle())
                             .padding(.horizontal)
-                            .onChange(of: timingMode) { _ in
+                            .onChange(of: timingMode) { 
                                 saveTimingMode()
                             }
                             
                             Text("Current mode: \(timingMode.displayName)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                            Divider()
+                                .padding(.vertical, 8)
+                            
+                            Text("Verification Code Length")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            
+                            Stepper(value: $codeLength, in: 3...8) {
+                                Text("\(codeLength) characters")
+                                    .font(.body)
+                            }
+                            .onChange(of: codeLength) { _ in
+                                saveCodeLength()
+                            }
+                            
+                            Text("Users must type a \(codeLength)-character code to continue")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
@@ -108,6 +134,7 @@ struct ContentView: View {
             checkIfAppsConfigured()
             restoreBlockingState()
             loadTimingMode()
+            loadCodeLength()
         }
     }
     
@@ -131,6 +158,8 @@ struct ContentView: View {
             
             // Set state to show continue screen
             urlScheme = savedScheme
+            // Trigger code regeneration by updating UUID
+            codeRegenerationTrigger = UUID()
             showContinueScreen = true
             print("  APP: Set showContinueScreen = true with scheme: '\(savedScheme)'")
         } else {
@@ -597,8 +626,8 @@ struct ContentView: View {
         print("💾 === SAVE LEARNED MAPPINGS END ===")
     }
     
-    // Start monitoring an app for 10 seconds
-    private func startAppMonitoring(for urlScheme: String) {
+    // Start monitoring an app with configurable delay
+    private func startAppMonitoring(for urlScheme: String, customDelay: Double? = nil) {
         guard let token = getApplicationToken(for: urlScheme) else {
             print("❌ FAILED to start monitoring for \(urlScheme): No application token found")
             print("  This means the app is not in your selected apps list")
@@ -616,17 +645,26 @@ struct ContentView: View {
             existingTimers.forEach { $0.cancel() }
         }
         
-        // Generate delay based on timing mode
+        // Generate delay based on timing mode or custom delay
         let blockDelay: Double
         let delayDescription: String
         
-        switch timingMode {
-        case .defaultMode:
-            blockDelay = 10.0
-            delayDescription = "10.0 seconds (default mode)"
-        case .randomMode:
-            blockDelay = Double.random(in: 1.0...10.0)
-            delayDescription = "\(String(format: "%.1f", blockDelay)) seconds (random mode)"
+        if let customDelay = customDelay {
+            blockDelay = customDelay
+            delayDescription = "\(String(format: "%.1f", blockDelay)) seconds (dynamic mode - \(Int(customDelay/2)) characters)"
+        } else {
+            switch timingMode {
+            case .defaultMode:
+                blockDelay = 10.0
+                delayDescription = "10.0 seconds (default mode)"
+            case .randomMode:
+                blockDelay = Double.random(in: 1.0...10.0)
+                delayDescription = "\(String(format: "%.1f", blockDelay)) seconds (random mode)"
+            case .dynamicMode:
+                // This shouldn't happen as dynamic mode should always provide customDelay
+                blockDelay = 2.0
+                delayDescription = "2.0 seconds (dynamic mode fallback)"
+            }
         }
         
         print("📱 STARTING monitoring for: \(urlScheme)")
@@ -846,12 +884,38 @@ struct ContentView: View {
             print("📱 TIMING MODE DEFAULT: Using default mode")
         }
     }
+    
+    // Save code length to UserDefaults
+    private func saveCodeLength() {
+        UserDefaults.standard.set(codeLength, forKey: "verificationCodeLength")
+        print("💾 CODE LENGTH SAVED: \(codeLength)")
+    }
+    
+    // Load code length from UserDefaults
+    private func loadCodeLength() {
+        let savedLength = UserDefaults.standard.integer(forKey: "verificationCodeLength")
+        if savedLength > 0 {
+            codeLength = savedLength
+            print("📱 CODE LENGTH LOADED: \(codeLength)")
+        } else {
+            codeLength = 4
+            print("📱 CODE LENGTH DEFAULT: Using 4 characters")
+        }
+    }
 }
 
 struct ContinueScreen: View {
     let urlScheme: String
     let timingMode: TimingMode
-    let onAppOpened: (String) -> Void
+    let codeLength: Int
+    let regenerationTrigger: UUID
+    let onAppOpened: (String, Double?) -> Void
+    
+    @State private var generatedCode: String = ""
+    @State private var userInput: String = ""
+    @State private var isCodeCorrect: Bool = false
+    @State private var showError: Bool = false
+    @State private var hasAppeared: Bool = false
     
     private var timingDescription: String {
         switch timingMode {
@@ -859,6 +923,83 @@ struct ContinueScreen: View {
             return "You'll have 10 seconds before it's blocked again."
         case .randomMode:
             return "You'll have 1-10 seconds (randomly) before it's blocked again."
+        case .dynamicMode:
+            return "Enter any amount - you get 2 seconds per character."
+        }
+    }
+    
+    private var instructionText: String {
+        switch timingMode {
+        case .defaultMode, .randomMode:
+            return "Enter this code to continue:"
+        case .dynamicMode:
+            return "Enter the beginning of this code:"
+        }
+    }
+    
+    // Generate random alphanumeric code
+    private func generateRandomCode() {
+        let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        
+        let length = timingMode == .dynamicMode ? 20 : codeLength
+        generatedCode = String((0..<length).map { _ in characters.randomElement()! })
+        print("🔢 Generated verification code (\(timingMode.rawValue) mode): \(generatedCode)")
+    }
+    
+    // Validate user input
+    private func validateInput() {
+        if timingMode == .dynamicMode {
+            validateDynamicInput()
+        } else {
+            validateExactInput()
+        }
+    }
+    
+    // Validate exact match for default/random modes
+    private func validateExactInput() {
+        if userInput == generatedCode {
+            isCodeCorrect = true
+            showError = false
+            print("✅ Code verification successful")
+        } else {
+            showError = true
+            isCodeCorrect = false
+            print("❌ Code verification failed. Expected: \(generatedCode), Got: \(userInput)")
+            
+            // Generate new code and clear input
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                generateRandomCode()
+                userInput = ""
+                showError = false
+            }
+        }
+    }
+    
+    // Validate substring match for dynamic mode
+    private func validateDynamicInput() {
+        guard !userInput.isEmpty else {
+            showError = true
+            isCodeCorrect = false
+            print("❌ Dynamic validation failed: Empty input")
+            return
+        }
+        
+        if generatedCode.hasPrefix(userInput) {
+            isCodeCorrect = true
+            showError = false
+            let earnedSeconds = userInput.count * 2
+            print("✅ Dynamic validation successful: \(userInput.count) characters = \(earnedSeconds) seconds")
+        } else {
+            showError = true
+            isCodeCorrect = false
+            print("❌ Dynamic validation failed. Input '\(userInput)' is not a valid prefix of '\(generatedCode)'")
+            
+            // Generate new code and clear input
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                generateRandomCode()
+                userInput = ""
+                showError = false
+            }
         }
     }
     
@@ -873,8 +1014,57 @@ struct ContinueScreen: View {
                 .multilineTextAlignment(.center)
                 .foregroundColor(.secondary)
             
+            VStack(spacing: 15) {
+                Text(instructionText)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                
+                Text(generatedCode)
+                    .font(.system(.title, design: .monospaced))
+                    .padding()
+                    .background(Color(.systemGray5))
+                    .cornerRadius(8)
+                    .foregroundColor(.primary)
+                
+                TextField("Enter code", text: $userInput)
+                    .font(.system(.title2, design: .monospaced))
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .keyboardType(.asciiCapable)
+                    .autocapitalization(.none)
+                    .disableAutocorrection(true)
+                    .textContentType(.none)
+                    .onChange(of: userInput) { oldValue, newValue in
+                        // Filter and limit input based on timing mode
+                        let maxLength = timingMode == .dynamicMode ? 20 : codeLength
+                        let filtered = String(newValue.prefix(maxLength).filter { char in
+                            char.isLetter || char.isNumber
+                        })
+                        if filtered != newValue {
+                            userInput = filtered
+                        }
+                    }
+                
+                if timingMode == .dynamicMode && !userInput.isEmpty {
+                    let earnedSeconds = userInput.count * 2
+                    Text("Earning: \(earnedSeconds) seconds (\(userInput.count) characters)")
+                        .font(.caption)
+                        .foregroundColor(.blue)
+                }
+                
+                if showError {
+                    Text("Incorrect code. Try again...")
+                        .font(.caption)
+                        .foregroundColor(.red)
+                        .transition(.opacity)
+                }
+            }
+            
             Button("Continue to App") {
-                openApp()
+                validateInput()
+                if isCodeCorrect {
+                    let customDelay = timingMode == .dynamicMode ? Double(userInput.count * 2) : nil
+                    openApp(customDelay: customDelay)
+                }
             }
             .font(.title2)
             .padding()
@@ -883,10 +1073,27 @@ struct ContinueScreen: View {
             .cornerRadius(10)
         }
         .padding()
+        .onAppear {
+            if !hasAppeared {
+                hasAppeared = true
+                generateRandomCode()
+                // Reset verification state for clean start
+                userInput = ""
+                isCodeCorrect = false
+                showError = false
+            }
+        }
+        .onChange(of: regenerationTrigger) { _ in
+            // Regenerate code whenever trigger changes (intent runs)
+            generateRandomCode()
+            userInput = ""
+            isCodeCorrect = false
+            showError = false
+        }
     }
     
     @MainActor
-    private func openApp() {
+    private func openApp(customDelay: Double? = nil) {
         print("🟠 CONTINUE BUTTON PRESSED:")
         print("  About to open URL scheme: '\(urlScheme)'")
         
@@ -907,8 +1114,8 @@ struct ContinueScreen: View {
             await UIApplication.shared.open(url)
             print("  UIApplication.open completed")
             
-            // Start 10-second monitoring for app blocking
-            onAppOpened(urlScheme)
+            // Start monitoring for app blocking with custom delay if provided
+            onAppOpened(urlScheme, customDelay)
         }
         print("🟠 CONTINUE BUTTON END\n")
     }
