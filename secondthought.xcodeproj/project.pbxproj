@@ -6,14 +6,28 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C2273CD92E468CD3005818EC /* lexend-deca.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C2273CD82E468CD3005818EC /* lexend-deca.ttf */; };
+		C2D5DCE02E45461600A7E5B4 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C2D5DCDF2E45461600A7E5B4 /* Launch Screen.storyboard */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
-		C21FACAC2E35418F009C5E0D /* secondthought.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = secondthought.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C2273C7C2E455198005818EC /* secondthought.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = secondthought.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C2273C892E455198005818EC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C2273C8D2E455198005818EC /* secondthought.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = secondthought.entitlements; sourceTree = "<group>"; };
+		C2273CD82E468CD3005818EC /* lexend-deca.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "lexend-deca.ttf"; sourceTree = "<group>"; };
+		C2D5DCDF2E45461600A7E5B4 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C21FACAE2E35418F009C5E0D /* secondthought */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = secondthought;
+			sourceTree = "<group>";
+		};
+		C2273CC12E455E73005818EC /* Assets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Assets;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -33,16 +47,13 @@
 			isa = PBXGroup;
 			children = (
 				C21FACAE2E35418F009C5E0D /* secondthought */,
-				C21FACAD2E35418F009C5E0D /* Products */,
+				C2273C892E455198005818EC /* Info.plist */,
+				C2273C8D2E455198005818EC /* secondthought.entitlements */,
+				C2273C7C2E455198005818EC /* secondthought.app */,
+				C2273CD82E468CD3005818EC /* lexend-deca.ttf */,
+				C2D5DCDF2E45461600A7E5B4 /* Launch Screen.storyboard */,
+				C2273CC12E455E73005818EC /* Assets */,
 			);
-			sourceTree = "<group>";
-		};
-		C21FACAD2E35418F009C5E0D /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				C21FACAC2E35418F009C5E0D /* secondthought.app */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -62,12 +73,13 @@
 			);
 			fileSystemSynchronizedGroups = (
 				C21FACAE2E35418F009C5E0D /* secondthought */,
+				C2273CC12E455E73005818EC /* Assets */,
 			);
 			name = secondthought;
 			packageProductDependencies = (
 			);
 			productName = secondthought;
-			productReference = C21FACAC2E35418F009C5E0D /* secondthought.app */;
+			productReference = C2273C7C2E455198005818EC /* secondthought.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -95,7 +107,7 @@
 			mainGroup = C21FACA32E35418F009C5E0D;
 			minimizedProjectReferenceProxies = 1;
 			preferredProjectObjectVersion = 77;
-			productRefGroup = C21FACAD2E35418F009C5E0D /* Products */;
+			productRefGroup = C21FACA32E35418F009C5E0D;
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
@@ -109,6 +121,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C2D5DCE02E45461600A7E5B4 /* Launch Screen.storyboard in Resources */,
+				C2273CD92E468CD3005818EC /* lexend-deca.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -251,17 +265,21 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = secondthought/secondthought.entitlements;
+				CODE_SIGN_ENTITLEMENTS = secondthought.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 72DJ49M92R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Second Thought";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -270,6 +288,10 @@
 				PRODUCT_BUNDLE_IDENTIFIER = yaseen.secondthought;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -284,17 +306,21 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = secondthought/secondthought.entitlements;
+				CODE_SIGN_ENTITLEMENTS = secondthought.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 72DJ49M92R;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Second Thought";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UILaunchStoryboardName = "Launch Screen.storyboard";
+				INFOPLIST_KEY_UIStatusBarHidden = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -303,6 +329,10 @@
 				PRODUCT_BUNDLE_IDENTIFIER = yaseen.secondthought;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
