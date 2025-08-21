@@ -45,6 +45,19 @@ struct ContentView: View {
                 VStack(){
                     UnlockChallengesView()
                     
+                    VStack(spacing: 16) {
+                        SettingItem(icon: "gear", title: "Settings") {
+                            // Settings action
+                        }
+                        
+                        SettingItem(icon: "arrow.clockwise", title: "Refresh") {
+                            // Refresh action
+                        }
+                        
+                        SettingItem(icon: "person", title: "Option", isToggled: .constant(true))
+                    }
+                    .padding(.top, 20)
+                    
 //                    if settings.hasConfiguredApps {
 //                        VStack(spacing: 15) {
 //                            Text("Timing Mode")
@@ -224,6 +237,7 @@ struct ContinueScreen: View {
     @State private var isCodeCorrect: Bool = false
     @State private var showError: Bool = false
     @State private var hasAppeared: Bool = false
+    @FocusState private var isInputFocused: Bool
     
     private var timingDescription: String {
         return settings.timingDescription
@@ -259,11 +273,9 @@ struct ContinueScreen: View {
             isCodeCorrect = false
             logger.warning("Code verification failed. Expected: \(generatedCode), Got: \(userInput)")
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                generateRandomCode()
-                userInput = ""
-                showError = false
-            }
+            generateRandomCode()
+            userInput = ""
+            showError = false
         }
     }
     
@@ -285,95 +297,91 @@ struct ContinueScreen: View {
             isCodeCorrect = false
             logger.warning("Dynamic validation failed. Input '\(userInput)' is not a valid prefix of '\(generatedCode)'")
             
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                generateRandomCode()
-                userInput = ""
-                showError = false
-            }
+            generateRandomCode()
+            userInput = ""
+            showError = false
         }
     }
     
     var body: some View {
-        VStack(spacing: 30) {
-            Text("App Unblocked")
-                .font(.title)
-                .foregroundColor(.green)
+        VStack(spacing: 20) {
+            // Purple code display box
+            Text(generatedCode)
+                .font(.system(.title2, design: .monospaced))
+                .foregroundStyle(Color.white)
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .frame(maxWidth: .infinity)
+                .background(Color.mainColor1)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             
-            Text("The app has been unblocked. \(timingDescription)")
-                .font(.body)
-                .multilineTextAlignment(.center)
-                .foregroundColor(.secondary)
-            
-            VStack(spacing: 15) {
-                Text(instructionText)
-                    .font(.headline)
-                    .foregroundColor(.primary)
-                
-                Text(generatedCode)
-                    .font(.system(.title, design: .monospaced))
-                    .padding()
-                    .background(Color(.systemGray5))
-                    .cornerRadius(8)
-                    .foregroundColor(.primary)
-                
-                TextField("Enter code", text: $userInput)
-                    .font(.system(.title2, design: .monospaced))
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .keyboardType(.asciiCapable)
-                    .autocapitalization(.none)
-                    .disableAutocorrection(true)
-                    .textContentType(.none)
-                    .onChange(of: userInput) { oldValue, newValue in
-                        let maxLength = settings.timingMode == .dynamicMode ? 20 : settings.verificationCodeLength
-                        let filtered = String(newValue.prefix(maxLength).filter { char in
-                            char.isLetter || char.isNumber
-                        })
-                        if filtered != newValue {
-                            userInput = filtered
-                        }
+            // Text input field
+            TextField("Enter code here", text: $userInput)
+                .font(.system(.title2, design: .monospaced))
+                .padding(.horizontal, 20)
+                .padding(.vertical, 16)
+                .background(Color(.systemGray6))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(.systemGray4), lineWidth: 1)
+                )
+                .focused($isInputFocused)
+                .keyboardType(.asciiCapable)
+                .autocapitalization(.none)
+                .disableAutocorrection(true)
+                .textContentType(.none)
+                .onChange(of: userInput) { oldValue, newValue in
+                    let maxLength = settings.timingMode == .dynamicMode ? 20 : settings.verificationCodeLength
+                    let filtered = String(newValue.prefix(maxLength).filter { char in
+                        char.isLetter || char.isNumber
+                    })
+                    if filtered != newValue {
+                        userInput = filtered
                     }
-                
-                if settings.timingMode == .dynamicMode && !userInput.isEmpty {
-                    let earnedSeconds = userInput.count * 2
-                    Text("Earning: \(earnedSeconds) seconds (\(userInput.count) characters)")
-                        .font(.caption)
-                        .foregroundColor(.blue)
                 }
-                
-                if showError {
-                    Text("Incorrect code. Try again...")
-                        .font(.caption)
-                        .foregroundColor(.red)
-                        .transition(.opacity)
-                }
-            }
             
-            Button("Continue to App") {
+            Spacer()
+            
+            // Continue button
+            Button {
                 validateInput()
                 if isCodeCorrect {
                     let customDelay = settings.timingMode == .dynamicMode ? Double(userInput.count * 2) : nil
                     openApp(customDelay: customDelay)
                 }
+            } label: {
+                HStack {
+                    Text("Continue")
+                    Image(systemName: "arrow.right")
+                }
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(Color.primary)
             }
-            .font(.title2)
-            .padding()
-            .background(Color.green)
-            .foregroundColor(.white)
-            .cornerRadius(10)
+            .padding(.bottom, 40)
+            
+            if showError {
+                Text("Incorrect code. Try again...")
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .transition(.opacity)
+            }
         }
-        .padding()
+        .padding(.horizontal, 20)
+        .padding(.top, 40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(.systemBackground))
         .onAppear {
             if !hasAppeared {
                 hasAppeared = true
                 generateRandomCode()
-                // Reset verification state for clean start
                 userInput = ""
                 isCodeCorrect = false
                 showError = false
+                isInputFocused = true
             }
         }
         .onChange(of: regenerationTrigger) {
-            // Regenerate code whenever trigger changes (intent runs)
             generateRandomCode()
             userInput = ""
             isCodeCorrect = false
@@ -440,5 +448,15 @@ struct AppSelectorView: View {
 #Preview("Home") {
     ContentView().onAppear {
         AppSettings.shared.hasConfiguredApps = true
+        
     }
+}
+
+#Preview("Unlock Screen") {
+    ContinueScreen(
+        urlScheme: "instagram://",
+        settings: AppSettings.shared,
+        regenerationTrigger: UUID(),
+        onAppOpened: { _, _ in }
+    )
 }
