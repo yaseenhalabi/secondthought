@@ -13,6 +13,5 @@ struct Challenge: Identifiable {
       let title: String
       let description: String
       let icon: String
-      let color: Color
       let isStarred: Bool
   }
