@@ -10,7 +10,6 @@ import SwiftUI
 
 extension Font {
     private static let fontFamily = "Lexend Deca"
-    
     static let largeTitle = Font.custom(fontFamily, size: 28).weight(.semibold)
     static let title = Font.custom(fontFamily, size: 20).weight(.medium)
     static let headline = Font.custom(fontFamily, size: 16).weight(.medium)

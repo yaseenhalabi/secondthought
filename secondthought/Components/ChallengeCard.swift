@@ -9,11 +9,11 @@ import Foundation
 import SwiftUI
 
 struct ChallengeCard: View {
-    let challenge: Challenge
+    let challenge: any Challenge
     
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(challenge.title)
+            Text(challenge.displayName)
                 .font(.headline)
                 .foregroundStyle(Color.white)
             
