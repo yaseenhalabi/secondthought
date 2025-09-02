@@ -7,13 +7,14 @@ class UserDefaultsService {
     static let shared = UserDefaultsService()
     private let logger = Logger.shared
     
+    
+    private let userDefaults = UserDefaults(suiteName: "group.yaseen.secondthought")!
+
     private init() {}
 
     private let hasConfiguredAppsKey = "hasConfiguredApps"
     private let selectedAppsKey = "selectedApps"
     private let schemeToTokenMappingKey = "schemeToTokenMapping"
-    private let blockedAppTokensKey = "blockedAppTokens"
-    private let blockExpirationTimesKey = "blockExpirationTimes"
     private let timingModeKey = "timingMode"
     private let verificationCodeLengthKey = "verificationCodeLength"
     private let selectedAppSchemeKey = "selectedAppScheme"
@@ -23,9 +24,9 @@ class UserDefaultsService {
     }
     
     var hasConfiguredApps: Bool {
-        get { UserDefaults.standard.bool(forKey: hasConfiguredAppsKey) }
+        get { userDefaults.bool(forKey: hasConfiguredAppsKey) }
         set { 
-            UserDefaults.standard.set(newValue, forKey: hasConfiguredAppsKey)
+            userDefaults.set(newValue, forKey: hasConfiguredAppsKey)
             logger.storage("HasConfiguredApps set to: \(newValue)")
         }
     }
@@ -35,12 +36,12 @@ class UserDefaultsService {
             logger.error("Failed to encode selected apps")
             return
         }
-        UserDefaults.standard.set(encoded, forKey: selectedAppsKey)
+        userDefaults.set(encoded, forKey: selectedAppsKey)
         logger.storage("Saved \(selection.applications.count) selected apps")
     }
     
     func loadSelectedApps() -> FamilyActivitySelection? {
-        guard let data = UserDefaults.standard.data(forKey: selectedAppsKey),
+        guard let data = userDefaults.data(forKey: selectedAppsKey),
               let decoded = try? JSONDecoder().decode(FamilyActivitySelection.self, from: data) else {
             logger.storage("No saved app selection found")
             return nil
@@ -54,12 +55,12 @@ class UserDefaultsService {
             logger.error("Failed to encode mappings")
             return
         }
-        UserDefaults.standard.set(encoded, forKey: schemeToTokenMappingKey)
+        userDefaults.set(encoded, forKey: schemeToTokenMappingKey)
         logger.storage("Saved \(mappings.count) mappings")
     }
 
     func loadMappings() -> [String: ApplicationToken] {
-        guard let data = UserDefaults.standard.data(forKey: schemeToTokenMappingKey),
+        guard let data = userDefaults.data(forKey: schemeToTokenMappingKey),
               let decoded = try? JSONDecoder().decode([String: ApplicationToken].self, from: data) else {
             logger.storage("No mappings found")
             return [:]
@@ -68,77 +69,42 @@ class UserDefaultsService {
         return decoded
     }
     
-    func saveBlockedTokens(_ tokens: Set<ApplicationToken>) {
-        guard let encoded = try? JSONEncoder().encode(Array(tokens)) else {
-            logger.error("Failed to encode blocked tokens")
-            return
-        }
-        UserDefaults.standard.set(encoded, forKey: blockedAppTokensKey)
-        logger.storage("Saved \(tokens.count) blocked tokens")
-    }
-    
-    func loadBlockedTokens() -> Set<ApplicationToken> {
-        guard let data = UserDefaults.standard.data(forKey: blockedAppTokensKey),
-              let decoded = try? JSONDecoder().decode([ApplicationToken].self, from: data) else {
-            logger.storage("No blocked tokens found")
-            return []
-        }
-        logger.storage("Loaded \(decoded.count) blocked tokens")
-        return Set(decoded)
-    }
-    
-    func saveBlockExpirationTimes(_ times: [String: Date]) {
-        let expirationData = times.mapValues { $0.timeIntervalSince1970 }
-        UserDefaults.standard.set(expirationData, forKey: blockExpirationTimesKey)
-        logger.storage("Saved \(times.count) expiration times")
-    }
-    
-    func loadBlockExpirationTimes() -> [String: Date] {
-        guard let savedExpirations = UserDefaults.standard.object(forKey: blockExpirationTimesKey) as? [String: TimeInterval] else {
-            logger.storage("No expiration times found")
-            return [:]
-        }
-        let times = savedExpirations.mapValues { Date(timeIntervalSince1970: $0) }
-        logger.storage("Loaded \(times.count) expiration times")
-        return times
-    }
-    
     var timingMode: String {
-        get { UserDefaults.standard.string(forKey: timingModeKey) ?? "default" }
+        get { userDefaults.string(forKey: timingModeKey) ?? "default" }
         set {
-            UserDefaults.standard.set(newValue, forKey: timingModeKey)
+            userDefaults.set(newValue, forKey: timingModeKey)
             logger.storage("Timing mode set to: \(newValue)")
         }
     }
     
     var verificationCodeLength: Int {
         get { 
-            let length = UserDefaults.standard.integer(forKey: verificationCodeLengthKey)
+            let length = userDefaults.integer(forKey: verificationCodeLengthKey)
             return length > 0 ? length : 4
         }
         set {
-            UserDefaults.standard.set(newValue, forKey: verificationCodeLengthKey)
+            userDefaults.set(newValue, forKey: verificationCodeLengthKey)
             logger.storage("Code length set to: \(newValue)")
         }
     }
     
     var selectedAppScheme: String {
-        get { UserDefaults.standard.string(forKey: selectedAppSchemeKey) ?? "" }
+        get { userDefaults.string(forKey: selectedAppSchemeKey) ?? "" }
         set {
-            UserDefaults.standard.set(newValue, forKey: selectedAppSchemeKey)
+            userDefaults.set(newValue, forKey: selectedAppSchemeKey)
             logger.storage("Selected app scheme set to: '\(newValue)'")
         }
     }
     
     func setContinueTimestamp(_ timestamp: TimeInterval, for scheme: String) {
         let key = continueTimestampKey(for: scheme)
-        UserDefaults.standard.set(timestamp, forKey: key)
+        userDefaults.set(timestamp, forKey: key)
         logger.storage("Continue timestamp set for \(scheme): \(timestamp)")
     }
     
     func getContinueTimestamp(for scheme: String) -> TimeInterval {
         let key = continueTimestampKey(for: scheme)
-        return UserDefaults.standard.double(forKey: key)
+        return userDefaults.double(forKey: key)
     }
     
     func resetConfiguration() {
@@ -148,12 +114,10 @@ class UserDefaultsService {
             hasConfiguredAppsKey,
             selectedAppsKey,
             schemeToTokenMappingKey,
-            blockedAppTokensKey,
-            blockExpirationTimesKey
         ]
         
         keysToRemove.forEach { key in
-            UserDefaults.standard.removeObject(forKey: key)
+            userDefaults.removeObject(forKey: key)
         }
         
         logger.storage("Configuration reset complete")

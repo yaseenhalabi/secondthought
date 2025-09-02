@@ -1,100 +1,76 @@
 import Foundation
 import FamilyControls
 import ManagedSettings
+import DeviceActivity
 
-class AppBlockingManager: AppBlockingManagerDelegate {
+class AppBlockingManager {
     static let shared = AppBlockingManager()
     
     private let logger = Logger.shared
     private let storage = UserDefaultsService.shared
     private let tokenMapper = AppTokenMapper.shared
-    private let timerManager = TimerManager.shared
+    private let center = DeviceActivityCenter()
     
     private let managedSettings = ManagedSettingsStore(named: .init("SecondThoughtStore"))
     
-    private var blockedApps: Set<ApplicationToken> = []
     private var selectedApps = FamilyActivitySelection()
     
     private init() {
-        timerManager.blockingDelegate = self
         restoreState()
     }
     
     func initialize(with selectedApps: FamilyActivitySelection) {
         self.selectedApps = selectedApps
+        storage.saveSelectedApps(selectedApps)
         logger.info("Initialized with \(selectedApps.applications.count) selected apps", context: "AppBlockingManager")
+        startMonitoring()
     }
     
     func restoreState() {
-        blockedApps = storage.loadBlockedTokens()
         if let savedApps = storage.loadSelectedApps() {
             selectedApps = savedApps
         }
-        
-        updateShieldSettings()
-        timerManager.restoreState()
-        
-        logger.info("Restored state: \(blockedApps.count) blocked apps", context: "AppBlockingManager")
+        logger.info("Restored state: \(selectedApps.applications.count) selected apps", context: "AppBlockingManager")
     }
     
-    func unblockAppForScheme(_ urlScheme: String) {
-        unblockApp(scheme: urlScheme)
-    }
-    
-    func startMonitoring(for urlScheme: String, timingMode: TimingMode, customDelay: Double? = nil) {
-        guard tokenMapper.getToken(for: urlScheme, from: selectedApps) != nil else {
-            logger.error("Cannot start monitoring - no token for \(urlScheme)", context: "AppBlockingManager")
-            return
-        }
+    func startMonitoring() {
+        logger.info("Starting device activity monitoring", context: "AppBlockingManager")
+        let schedule = DeviceActivitySchedule(
+            intervalStart: DateComponents(hour: 0, minute: 0),
+            intervalEnd: DateComponents(hour: 23, minute: 59),
+            repeats: true
+        )
         
-        logger.info("Starting monitoring for \(urlScheme)", context: "AppBlockingManager")
-        timerManager.startMonitoring(for: urlScheme, timingMode: timingMode, customDelay: customDelay)
-    }
-    
-    private func updateShieldSettings() {
-        logger.shield("Updating shield with \(blockedApps.count) blocked apps", context: "AppBlockingManager")
+        let event = DeviceActivityEvent(
+            applications: self.selectedApps.applicationTokens,
+            webDomains: self.selectedApps.webDomainTokens,
+            threshold: DateComponents(second: 10)
+        )
         
-        let authStatus = AuthorizationCenter.shared.authorizationStatus
-        guard authStatus == .approved else {
-            logger.error("Not authorized for Family Controls (status: \(authStatus))", context: "AppBlockingManager")
-            return
-        }
-        
-        let shieldValue = blockedApps.isEmpty ? nil : blockedApps
-        managedSettings.shield.applications = shieldValue
-        
-        logger.shield("Shield updated successfully", context: "AppBlockingManager")
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-            let currentCount = self?.managedSettings.shield.applications?.count ?? 0
-            self?.logger.shield("Verification: Shield contains \(currentCount) apps", context: "AppBlockingManager")
+        do {
+            try center.startMonitoring(.daily, during: schedule, events: [.threshold: event])
+            logger.info("Device activity monitoring started successfully", context: "AppBlockingManager")
+        } catch {
+            logger.error("Error starting device activity monitoring: \(error.localizedDescription)", context: "AppBlockingManager")
         }
     }
     
-    private func saveState() {
-        storage.saveBlockedTokens(blockedApps)
-    }
-    
-    func isAppBlocked(scheme: String) -> Bool {
-        guard let token = tokenMapper.getToken(for: scheme, from: selectedApps) else {
-            return false
-        }
-        return blockedApps.contains(token)
+    func stopMonitoring() {
+        logger.info("Stopping device activity monitoring", context: "AppBlockingManager")
+        center.stopMonitoring([.daily])
     }
     
     func unblockAllApps() {
         logger.unblocking("Unblocking all apps", context: "AppBlockingManager")
-        blockedApps.removeAll()
-        timerManager.cancelAllTimers()
-        updateShieldSettings()
-        saveState()
+        managedSettings.shield.applications = nil
+        managedSettings.shield.webDomains = nil
+        stopMonitoring()
     }
     
     func resetConfiguration() {
         logger.info("Resetting configuration", context: "AppBlockingManager")
         unblockAllApps()
         selectedApps = FamilyActivitySelection()
-        tokenMapper.loadMappings()
         storage.resetConfiguration()
     }
     
@@ -105,43 +81,43 @@ class AppBlockingManager: AppBlockingManagerDelegate {
     }
 }
 
+// Delegate conformance for older parts of the app, can be removed gradually.
 extension AppBlockingManager {
     func blockApp(scheme: String) {
-        logger.blocking("Blocking app for scheme: \(scheme)", context: "AppBlockingManager")
-        
-        guard let token = tokenMapper.getToken(for: scheme, from: selectedApps) else {
-            logger.error("Cannot block - no token for \(scheme)", context: "AppBlockingManager")
-            return
-        }
-        
-        let wasInserted = blockedApps.insert(token).inserted
-        logger.blocking("Token added to blocked apps: \(wasInserted)", context: "AppBlockingManager")
-        
-        if wasInserted {
-            updateShieldSettings()
-            saveState()
-        }
+        // This is now handled by the DeviceActivityMonitorExtension
+        logger.info("blockApp called for \(scheme), but is now handled by the extension.", context: "AppBlockingManager")
     }
     
     func unblockApp(scheme: String) {
-        logger.unblocking("Unblocking app for scheme: \(scheme)", context: "AppBlockingManager")
+        // Unblocking is handled by removing the shield entirely for a short period.
+        // This might be initiated from the ContinueScreen.
+        logger.info("unblockApp called for \(scheme).", context: "AppBlockingManager")
+        managedSettings.shield.applications = nil
+        managedSettings.shield.webDomains = nil
         
-        guard let token = tokenMapper.getToken(for: scheme, from: selectedApps) else {
-            logger.error("Cannot unblock - no token for \(scheme)", context: "AppBlockingManager")
-            return
-        }
-        
-        let wasRemoved = blockedApps.remove(token) != nil
-        logger.unblocking("Token removed from blocked apps: \(wasRemoved)", context: "AppBlockingManager")
-        
-        if wasRemoved {
-            updateShieldSettings()
-            saveState()
+        // After a short delay, restart monitoring to re-apply the shield.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.startMonitoring()
         }
     }
     
+    func isAppBlocked(scheme: String) -> Bool {
+        // This is difficult to determine synchronously now.
+        // The UI should adapt to the shield being active rather than checking a boolean.
+        return false
+    }
+    
     func unblockExpiredApp(scheme: String) {
-        logger.unblocking("Unblocking expired app for scheme: \(scheme)", context: "AppBlockingManager")
-        unblockApp(scheme: scheme)
+        // Not relevant anymore with the new model.
+    }
+    
+    func startMonitoring(for urlScheme: String, timingMode: TimingMode, customDelay: Double? = nil) {
+        // This is now handled by the DeviceActivityMonitorExtension
+        logger.info("startMonitoring called for \(urlScheme), but is now handled by the extension.", context: "AppBlockingManager")
+    }
+    
+    func unblockAppForScheme(_ urlScheme: String) {
+        unblockApp(scheme: urlScheme)
     }
 }
+

@@ -8,16 +8,54 @@
 
 /* Begin PBXBuildFile section */
 		C2273CD92E468CD3005818EC /* lexend-deca.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C2273CD82E468CD3005818EC /* lexend-deca.ttf */; };
+		C26BE2432E66ADDD00C2FCD6 /* DeviceActivity.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = C26BE2422E66ADDC00C2FCD6 /* DeviceActivity.framework */; };
+		C26BE24B2E66ADDD00C2FCD6 /* secondthoughtMonitor.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C26BE2402E66ADDC00C2FCD6 /* secondthoughtMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		C2D5DCE02E45461600A7E5B4 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = C2D5DCDF2E45461600A7E5B4 /* Launch Screen.storyboard */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C26BE2492E66ADDD00C2FCD6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C21FACA42E35418F009C5E0D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C26BE23F2E66ADDC00C2FCD6;
+			remoteInfo = secondthoughtMonitor;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C26BE2502E66ADDD00C2FCD6 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C26BE24B2E66ADDD00C2FCD6 /* secondthoughtMonitor.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		C2273C7C2E455198005818EC /* secondthought.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = secondthought.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C2273C892E455198005818EC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		C2273C8D2E455198005818EC /* secondthought.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = secondthought.entitlements; sourceTree = "<group>"; };
 		C2273CD82E468CD3005818EC /* lexend-deca.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "lexend-deca.ttf"; sourceTree = "<group>"; };
+		C26BE2402E66ADDC00C2FCD6 /* secondthoughtMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = secondthoughtMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C26BE2422E66ADDC00C2FCD6 /* DeviceActivity.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = DeviceActivity.framework; path = System/Library/Frameworks/DeviceActivity.framework; sourceTree = SDKROOT; };
 		C2D5DCDF2E45461600A7E5B4 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C26BE24C2E66ADDD00C2FCD6 /* Exceptions for "secondthoughtMonitor" folder in "secondthoughtMonitor" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C26BE23F2E66ADDC00C2FCD6 /* secondthoughtMonitor */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C21FACAE2E35418F009C5E0D /* secondthought */ = {
@@ -30,6 +68,14 @@
 			path = Assets;
 			sourceTree = "<group>";
 		};
+		C26BE2442E66ADDD00C2FCD6 /* secondthoughtMonitor */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C26BE24C2E66ADDD00C2FCD6 /* Exceptions for "secondthoughtMonitor" folder in "secondthoughtMonitor" target */,
+			);
+			path = secondthoughtMonitor;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,6 +83,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C26BE23D2E66ADDC00C2FCD6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C26BE2432E66ADDD00C2FCD6 /* DeviceActivity.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,7 +107,18 @@
 				C2273CD82E468CD3005818EC /* lexend-deca.ttf */,
 				C2D5DCDF2E45461600A7E5B4 /* Launch Screen.storyboard */,
 				C2273CC12E455E73005818EC /* Assets */,
+				C26BE2402E66ADDC00C2FCD6 /* secondthoughtMonitor.appex */,
+				C26BE2442E66ADDD00C2FCD6 /* secondthoughtMonitor */,
+				C26BE2412E66ADDC00C2FCD6 /* Frameworks */,
 			);
+			sourceTree = "<group>";
+		};
+		C26BE2412E66ADDC00C2FCD6 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				C26BE2422E66ADDC00C2FCD6 /* DeviceActivity.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -66,10 +131,12 @@
 				C21FACA82E35418F009C5E0D /* Sources */,
 				C21FACA92E35418F009C5E0D /* Frameworks */,
 				C21FACAA2E35418F009C5E0D /* Resources */,
+				C26BE2502E66ADDD00C2FCD6 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C26BE24A2E66ADDD00C2FCD6 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C21FACAE2E35418F009C5E0D /* secondthought */,
@@ -82,6 +149,28 @@
 			productReference = C2273C7C2E455198005818EC /* secondthought.app */;
 			productType = "com.apple.product-type.application";
 		};
+		C26BE23F2E66ADDC00C2FCD6 /* secondthoughtMonitor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C26BE24D2E66ADDD00C2FCD6 /* Build configuration list for PBXNativeTarget "secondthoughtMonitor" */;
+			buildPhases = (
+				C26BE23C2E66ADDC00C2FCD6 /* Sources */,
+				C26BE23D2E66ADDC00C2FCD6 /* Frameworks */,
+				C26BE23E2E66ADDC00C2FCD6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C26BE2442E66ADDD00C2FCD6 /* secondthoughtMonitor */,
+			);
+			name = secondthoughtMonitor;
+			packageProductDependencies = (
+			);
+			productName = secondthoughtMonitor;
+			productReference = C26BE2402E66ADDC00C2FCD6 /* secondthoughtMonitor.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -93,6 +182,9 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					C21FACAB2E35418F009C5E0D = {
+						CreatedOnToolsVersion = 26.0;
+					};
+					C26BE23F2E66ADDC00C2FCD6 = {
 						CreatedOnToolsVersion = 26.0;
 					};
 				};
@@ -112,6 +204,7 @@
 			projectRoot = "";
 			targets = (
 				C21FACAB2E35418F009C5E0D /* secondthought */,
+				C26BE23F2E66ADDC00C2FCD6 /* secondthoughtMonitor */,
 			);
 		};
 /* End PBXProject section */
@@ -126,6 +219,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C26BE23E2E66ADDC00C2FCD6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -136,7 +236,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C26BE23C2E66ADDC00C2FCD6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C26BE24A2E66ADDD00C2FCD6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C26BE23F2E66ADDC00C2FCD6 /* secondthoughtMonitor */;
+			targetProxy = C26BE2492E66ADDD00C2FCD6 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		C21FACB52E35418F009C5E0D /* Debug */ = {
@@ -342,6 +457,64 @@
 			};
 			name = Release;
 		};
+		C26BE24E2E66ADDD00C2FCD6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = secondthoughtMonitor/secondthoughtMonitor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 72DJ49M92R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = secondthoughtMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = secondthoughtMonitor;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = yaseen.secondthought.secondthoughtMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C26BE24F2E66ADDD00C2FCD6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = secondthoughtMonitor/secondthoughtMonitor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 72DJ49M92R;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = secondthoughtMonitor/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = secondthoughtMonitor;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = yaseen.secondthought.secondthoughtMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -359,6 +532,15 @@
 			buildConfigurations = (
 				C21FACB82E35418F009C5E0D /* Debug */,
 				C21FACB92E35418F009C5E0D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C26BE24D2E66ADDD00C2FCD6 /* Build configuration list for PBXNativeTarget "secondthoughtMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C26BE24E2E66ADDD00C2FCD6 /* Debug */,
+				C26BE24F2E66ADDD00C2FCD6 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

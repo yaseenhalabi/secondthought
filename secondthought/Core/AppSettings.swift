@@ -1,6 +1,15 @@
 import Foundation
 import SwiftUI
 import Combine
+import DeviceActivity
+
+extension DeviceActivityName {
+    static let daily = Self("daily")
+}
+
+extension DeviceActivityEvent.Name {
+    static let threshold = Self("threshold")
+}
 
 class AppSettings: ObservableObject {
     static let shared = AppSettings()
