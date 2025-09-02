@@ -23,4 +23,22 @@ protocol Challenge: View {
     var description: String { get }
     var icon: String { get }
     var isPremium: Bool { get }
+    
+}
+
+extension Challenge {
+    
+    @MainActor
+    func openApp(urlScheme: String, settings: AppSettings, onAppOpened: (String) -> Void) async {
+        
+        guard let url = URL(string: urlScheme) else {
+            return
+        }
+        
+        settings.setContinueTimestamp(for: urlScheme)
+        
+        await UIApplication.shared.open(url)
+        
+        onAppOpened(urlScheme)
+    }
 }

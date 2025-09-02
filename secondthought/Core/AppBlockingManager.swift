@@ -38,20 +38,7 @@ class AppBlockingManager: AppBlockingManagerDelegate {
     }
     
     func unblockAppForScheme(_ urlScheme: String) {
-        logger.unblocking("Unblocking app for scheme: \(urlScheme)", context: "AppBlockingManager")
-        
-        guard let token = tokenMapper.getToken(for: urlScheme, from: selectedApps) else {
-            logger.error("No token found for scheme: \(urlScheme)", context: "AppBlockingManager")
-            return
-        }
-        
-        let wasRemoved = blockedApps.remove(token) != nil
-        logger.unblocking("Token removed from blocked apps: \(wasRemoved)", context: "AppBlockingManager")
-        
-        if wasRemoved {
-            updateShieldSettings()
-            saveState()
-        }
+        unblockApp(scheme: urlScheme)
     }
     
     func startMonitoring(for urlScheme: String, timingMode: TimingMode, customDelay: Double? = nil) {
@@ -86,7 +73,6 @@ class AppBlockingManager: AppBlockingManagerDelegate {
     
     private func saveState() {
         storage.saveBlockedTokens(blockedApps)
-        tokenMapper.updateActiveMappings(tokenMapper.getLearnedMappings())
     }
     
     func isAppBlocked(scheme: String) -> Bool {
@@ -145,9 +131,13 @@ extension AppBlockingManager {
             return
         }
         
-        blockedApps.remove(token)
-        updateShieldSettings()
-        saveState()
+        let wasRemoved = blockedApps.remove(token) != nil
+        logger.unblocking("Token removed from blocked apps: \(wasRemoved)", context: "AppBlockingManager")
+        
+        if wasRemoved {
+            updateShieldSettings()
+            saveState()
+        }
     }
     
     func unblockExpiredApp(scheme: String) {

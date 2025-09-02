@@ -27,13 +27,7 @@ class AppTokenMapper {
     ]
     
     func loadMappings() {
-        learnedMappings = storage.loadLearnedMappings()
-        
-        let activeMappings = storage.loadActiveMappings()
-        for (scheme, token) in activeMappings {
-            learnedMappings[scheme] = token
-        }
-        
+        learnedMappings = storage.loadMappings()
         logger.storage("Loaded \(learnedMappings.count) total mappings", context: "AppTokenMapper")
     }
     
@@ -64,23 +58,11 @@ class AppTokenMapper {
     
     func learnToken(_ token: ApplicationToken, for urlScheme: String) {
         learnedMappings[urlScheme] = token
-        storage.saveLearnedMappings(learnedMappings)
+        storage.saveMappings(learnedMappings)
         logger.success("Learned new mapping: \(urlScheme) -> \(token)", context: "AppTokenMapper")
     }
     
-    func getLearnedMappings() -> [String: ApplicationToken] {
+    func getMappings() -> [String: ApplicationToken] {
         return learnedMappings
-    }
-    
-    func updateActiveMappings(_ mappings: [String: ApplicationToken]) {
-        for (scheme, token) in mappings {
-            learnedMappings[scheme] = token
-        }
-        storage.saveActiveMappings(mappings)
-        logger.storage("Updated active mappings with \(mappings.count) entries", context: "AppTokenMapper")
-    }
-    
-    func getBundleIdentifier(for urlScheme: String) -> String? {
-        return schemeToBundle[urlScheme]
     }
 }
