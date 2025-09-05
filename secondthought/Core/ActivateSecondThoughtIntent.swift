@@ -14,30 +14,22 @@ struct ActivateSecondThoughtIntent: AppIntent {
     @Parameter(title: "URL Scheme", description: "Enter the app's URL scheme (e.g. instagram://)")
     var urlScheme: String
     
-    private let logger = Logger.shared
     private let blockingManager = AppBlockingManager.shared
     private let settings = AppSettings.shared
     
     func perform() async throws -> some IntentResult {
-        logger.intent("Intent started for scheme: '\(urlScheme)'")
-        
         blockingManager.unblockAppForScheme(urlScheme)
         
-        if settings.shouldSkipForegrounding(for: urlScheme) {
-            logger.intent("Skipping foreground - user recently continued")
-        } else {
-            logger.intent("Proceeding with foreground")
+        if !settings.shouldSkipForegrounding(for: urlScheme) {
             settings.selectedAppScheme = urlScheme
             
             do {
                 try await continueInForeground(alwaysConfirm: false)
-                logger.intent("Foreground operation completed")
             } catch {
-                logger.error("Couldn't bring app to foreground: \(error)")
+                // Couldn't bring app to foreground, not critical
             }
         }
         
-        logger.intent("Intent completed")
         return .result()
     }
 }

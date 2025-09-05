@@ -4,7 +4,6 @@ import FamilyControls
 class TimerManager {
     static let shared = TimerManager()
     
-    private let logger = Logger.shared
     private let storage = UserDefaultsService.shared
     
     private var activeTimers: [String: [DispatchWorkItem]] = [:]
@@ -33,7 +32,6 @@ class TimerManager {
         }
         
         if !expiredSchemes.isEmpty {
-            logger.info("Cleaning up \(expiredSchemes.count) expired blocks", context: "TimerManager")
             for scheme in expiredSchemes {
                 blockExpirationTimes.removeValue(forKey: scheme)
                 blockingDelegate?.unblockExpiredApp(scheme: scheme)
@@ -49,21 +47,16 @@ class TimerManager {
             let timeRemaining = expirationDate.timeIntervalSince(now)
             
             if timeRemaining > 0 {
-                logger.timer("Restoring timer for \(scheme), \(Int(timeRemaining))s remaining", context: "TimerManager")
                 scheduleUnblockTimer(for: scheme, delay: timeRemaining)
             }
         }
     }
     
     func startMonitoring(for urlScheme: String, timingMode: TimingMode, customDelay: Double? = nil) {
-        logger.timer("Starting monitoring for \(urlScheme)", context: "TimerManager")
-        
         cancelExistingTimers(for: urlScheme)
         
         let blockDelay = calculateBlockDelay(mode: timingMode, customDelay: customDelay)
         let totalExpirationTime = blockDelay + 600 // 10 minutes after blocking
-        
-        logger.timer("Block delay: \(String(format: "%.1f", blockDelay))s, Total: \(String(format: "%.1f", totalExpirationTime))s", context: "TimerManager")
         
         scheduleBlockTimer(for: urlScheme, delay: blockDelay)
         scheduleUnblockTimer(for: urlScheme, delay: totalExpirationTime)
@@ -91,7 +84,6 @@ class TimerManager {
     
     private func scheduleBlockTimer(for urlScheme: String, delay: Double) {
         let blockWorkItem = DispatchWorkItem { [weak self] in
-            self?.logger.timer("Block timer fired for \(urlScheme)", context: "TimerManager")
             self?.blockingDelegate?.blockApp(scheme: urlScheme)
         }
         
@@ -101,7 +93,6 @@ class TimerManager {
     
     private func scheduleUnblockTimer(for urlScheme: String, delay: Double) {
         let unblockWorkItem = DispatchWorkItem { [weak self] in
-            self?.logger.timer("Unblock timer fired for \(urlScheme)", context: "TimerManager")
             self?.blockingDelegate?.unblockApp(scheme: urlScheme)
             self?.blockExpirationTimes.removeValue(forKey: urlScheme)
             self?.activeTimers.removeValue(forKey: urlScheme)
@@ -121,14 +112,12 @@ class TimerManager {
     
     func cancelExistingTimers(for urlScheme: String) {
         if let existingTimers = activeTimers[urlScheme] {
-            logger.timer("Cancelling \(existingTimers.count) existing timers for \(urlScheme)", context: "TimerManager")
             existingTimers.forEach { $0.cancel() }
         }
         activeTimers[urlScheme] = []
     }
     
     func cancelAllTimers() {
-        logger.timer("Cancelling all active timers", context: "TimerManager")
         for (_, timers) in activeTimers {
             timers.forEach { $0.cancel() }
         }

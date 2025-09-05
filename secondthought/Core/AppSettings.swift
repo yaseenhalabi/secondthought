@@ -5,27 +5,23 @@ import Combine
 class AppSettings: ObservableObject {
     static let shared = AppSettings()
     
-    private let logger = Logger.shared
     private let storage = UserDefaultsService.shared
     
     @Published var timingMode: TimingMode {
         didSet {
             storage.timingMode = timingMode.rawValue
-            logger.info("Timing mode changed to: \(timingMode.displayName)", context: "AppSettings")
         }
     }
     
     @Published var verificationCodeLength: Int {
         didSet {
             storage.verificationCodeLength = verificationCodeLength
-            logger.info("Code length changed to: \(verificationCodeLength)", context: "AppSettings")
         }
     }
     
     @Published var hasConfiguredApps: Bool {
         didSet {
             storage.hasConfiguredApps = hasConfiguredApps
-            logger.info("HasConfiguredApps changed to: \(hasConfiguredApps)", context: "AppSettings")
         }
     }
     
@@ -34,8 +30,6 @@ class AppSettings: ObservableObject {
         self.timingMode = TimingMode(rawValue: savedModeString) ?? .defaultMode
         self.verificationCodeLength = storage.verificationCodeLength
         self.hasConfiguredApps = storage.hasConfiguredApps
-        
-        logger.info("Settings loaded - Mode: \(timingMode.displayName), Code: \(verificationCodeLength), Configured: \(hasConfiguredApps)", context: "AppSettings")
     }
     
     var timingDescription: String {
@@ -61,7 +55,6 @@ class AppSettings: ObservableObject {
     func setContinueTimestamp(for scheme: String) {
         let now = Date().timeIntervalSince1970
         storage.setContinueTimestamp(now, for: scheme)
-        logger.info("Continue timestamp set for \(scheme)", context: "AppSettings")
     }
     
     func shouldSkipForegrounding(for scheme: String) -> Bool {
@@ -71,10 +64,6 @@ class AppSettings: ObservableObject {
         
         let recentlyContinued = lastContinueTime > 0 && timeSinceContinue < continueCooldownPeriod
         
-        if recentlyContinued {
-            logger.info("Skipping foreground - user recently continued \(scheme)", context: "AppSettings")
-        }
-        
         return recentlyContinued
     }
     
@@ -82,12 +71,10 @@ class AppSettings: ObservableObject {
         get { storage.selectedAppScheme }
         set { 
             storage.selectedAppScheme = newValue
-            logger.info("Selected app scheme set to: '\(newValue)'", context: "AppSettings")
         }
     }
     
     func clearSelectedAppScheme() {
         selectedAppScheme = ""
-        logger.info("Selected app scheme cleared", context: "AppSettings")
     }
 }

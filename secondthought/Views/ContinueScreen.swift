@@ -13,8 +13,6 @@ struct ContinueScreen: View {
     let regenerationTrigger: UUID
     let onAppOpened: (String, Double?) -> Void
     
-    private let logger = Logger.shared
-    
     @State private var generatedCode: String = ""
     @State private var userInput: String = ""
     @State private var isCodeCorrect: Bool = false
@@ -35,7 +33,6 @@ struct ContinueScreen: View {
         
         let length = settings.timingMode == .dynamicMode ? 20 : settings.verificationCodeLength
         generatedCode = String((0..<length).map { _ in characters.randomElement()! })
-        logger.ui("Generated verification code (\(settings.timingMode.rawValue) mode): \(generatedCode)")
     }
     
     private func validateInput() {
@@ -50,11 +47,9 @@ struct ContinueScreen: View {
         if userInput == generatedCode {
             isCodeCorrect = true
             showError = false
-            logger.success("Code verification successful")
         } else {
             showError = true
             isCodeCorrect = false
-            logger.warning("Code verification failed. Expected: \(generatedCode), Got: \(userInput)")
             
             generateRandomCode()
             userInput = ""
@@ -66,19 +61,15 @@ struct ContinueScreen: View {
         guard !userInput.isEmpty else {
             showError = true
             isCodeCorrect = false
-            logger.warning("Dynamic validation failed: Empty input")
             return
         }
         
         if generatedCode.hasPrefix(userInput) {
             isCodeCorrect = true
             showError = false
-            let earnedSeconds = userInput.count * 2
-            logger.success("Dynamic validation successful: \(userInput.count) characters = \(earnedSeconds) seconds")
         } else {
             showError = true
             isCodeCorrect = false
-            logger.warning("Dynamic validation failed. Input '\(userInput)' is not a valid prefix of '\(generatedCode)'")
             
             generateRandomCode()
             userInput = ""
@@ -174,17 +165,13 @@ struct ContinueScreen: View {
     
     @MainActor
     private func openApp(customDelay: Double? = nil) {
-        logger.ui("Continue button pressed for scheme: '\(urlScheme)'")
-        
         guard let url = URL(string: urlScheme) else { 
-            logger.error("Invalid URL scheme: \(urlScheme)")
             return 
         }
         
         settings.setContinueTimestamp(for: urlScheme)
         
         Task {
-            logger.ui("Opening URL: \(url)")
             await UIApplication.shared.open(url)
             
             onAppOpened(urlScheme, customDelay)

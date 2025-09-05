@@ -21,7 +21,6 @@ struct ContentView: View {
     
     @ObservedObject private var settings = AppSettings.shared
     
-    private let logger = Logger.shared
     private let blockingManager = AppBlockingManager.shared
     private let deviceActivityCenter = DeviceActivityCenter()
     
@@ -87,11 +86,7 @@ struct ContentView: View {
     private func handleAppBecameActive() {
         let savedScheme = settings.selectedAppScheme
         
-        logger.ui("App became active, saved scheme: '\(savedScheme)'")
-        
         if !savedScheme.isEmpty {
-            logger.ui("Showing continue screen for scheme: \(savedScheme)")
-            
             settings.clearSelectedAppScheme()
             blockingManager.restoreState()
             
@@ -99,7 +94,6 @@ struct ContentView: View {
             codeRegenerationTrigger = UUID()
             showContinueScreen = true
         } else {
-            logger.ui("No saved scheme, showing home screen")
             showContinueScreen = false
         }
     }
@@ -108,76 +102,57 @@ struct ContentView: View {
         guard !hasRequestedPermissions else { return }
         
         let authStatus = AuthorizationCenter.shared.authorizationStatus
-        logger.info("Permission check - status: \(authStatus)")
         
         if authStatus == .notDetermined {
-            logger.info("Requesting Screen Time permissions")
             hasRequestedPermissions = true
             
             Task {
                 do {
                     try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
-                    logger.success("Screen Time permission granted")
                     handlePermissionGranted()
                 } catch {
-                    logger.error("Screen Time permission denied: \(error)")
                     handlePermissionDenied()
                 }
             }
         } else if authStatus == .approved {
-            logger.success("Screen Time permissions already granted")
             handlePermissionGranted()
         } else {
-            logger.warning("Screen Time permissions denied or restricted")
             handlePermissionDenied()
         }
     }
     
     private func handlePermissionGranted() {
-        logger.success("DeviceActivity API is now available")
+        // Was previously a log
     }
     
     private func handlePermissionDenied() {
-        logger.warning("DeviceActivity API not available - limited functionality")
+        // Was previously a log
     }
     
     
     
     private func checkIfAppsConfigured() {
-        logger.info("Checking app configuration")
-        
         if settings.hasConfiguredApps {
-            logger.info("Loading existing configuration")
             loadAppConfiguration()
             
-            if blockingManager.validateConfiguration() {
-                logger.success("Valid configuration found")
-            } else {
-                logger.warning("Invalid configuration - forcing reconfiguration")
+            if !blockingManager.validateConfiguration() {
                 blockingManager.resetConfiguration()
                 settings.hasConfiguredApps = false
             }
-        } else {
-            logger.info("No previous configuration found")
         }
     }
     
     
     private func saveAppConfiguration() {
-        logger.storage("Saving app configuration with \(selectedApps.applications.count) apps")
-        
         UserDefaultsService.shared.saveSelectedApps(selectedApps)
         settings.hasConfiguredApps = true
         blockingManager.initialize(with: selectedApps)
-        
-        logger.storage("App configuration saved successfully")
     }
     
     private func loadAppConfiguration() {
         if let savedApps = UserDefaultsService.shared.loadSelectedApps() {
             selectedApps = savedApps
             blockingManager.initialize(with: selectedApps)
-            logger.storage("Loaded \(selectedApps.applications.count) selected apps")
         }
     }
     

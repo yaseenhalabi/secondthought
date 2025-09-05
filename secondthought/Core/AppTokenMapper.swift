@@ -5,7 +5,6 @@ import DeviceActivity
 class AppTokenMapper {
     static let shared = AppTokenMapper()
     
-    private let logger = Logger.shared
     private let storage = UserDefaultsService.shared
     
     private var learnedMappings: [String: ApplicationToken] = [:]
@@ -28,27 +27,19 @@ class AppTokenMapper {
     
     func loadMappings() {
         learnedMappings = storage.loadMappings()
-        logger.storage("Loaded \(learnedMappings.count) total mappings", context: "AppTokenMapper")
     }
     
     func getToken(for urlScheme: String, from selectedApps: FamilyActivitySelection) -> ApplicationToken? {
-        logger.debug("Getting token for scheme: \(urlScheme)", context: "AppTokenMapper")
-        
         if let learnedToken = learnedMappings[urlScheme] {
-            logger.success("Found learned mapping for \(urlScheme)", context: "AppTokenMapper")
             return learnedToken
         }
         
-        logger.info("No learned mapping found, attempting auto-detection", context: "AppTokenMapper")
-        
         guard schemeToBundle[urlScheme] != nil else {
-            logger.error("No bundle ID found for scheme: \(urlScheme)", context: "AppTokenMapper")
             return nil
         }
         
         let availableTokens = Array(selectedApps.applicationTokens)
         guard let firstToken = availableTokens.first else {
-            logger.error("No available tokens to assign", context: "AppTokenMapper")
             return nil
         }
         
@@ -59,7 +50,6 @@ class AppTokenMapper {
     func learnToken(_ token: ApplicationToken, for urlScheme: String) {
         learnedMappings[urlScheme] = token
         storage.saveMappings(learnedMappings)
-        logger.success("Learned new mapping: \(urlScheme) -> \(token)", context: "AppTokenMapper")
     }
     
     func getMappings() -> [String: ApplicationToken] {
