@@ -17,7 +17,7 @@
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <imageView opaque="NO" clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" image="secondthoughtlogoicon.png" translatesAutoresizingMaskIntoConstraints="NO" id="OwG-Vc-tcZ">
-                                <rect key="frame" x="76" y="371" width="240" height="128.00000000002387"/>
+                                <rect key="frame" x="75.866278557810574" y="364.28017326059467" width="240.00000000009845" height="128.00000000014575"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                             </imageView>
                         </subviews>

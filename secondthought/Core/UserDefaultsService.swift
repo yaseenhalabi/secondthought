@@ -13,9 +13,8 @@ class UserDefaultsService {
     private let schemeToTokenMappingKey = "schemeToTokenMapping"
     private let blockedAppTokensKey = "blockedAppTokens"
     private let blockExpirationTimesKey = "blockExpirationTimes"
-    private let timingModeKey = "timingMode"
-    private let verificationCodeLengthKey = "verificationCodeLength"
     private let selectedAppSchemeKey = "selectedAppScheme"
+    private let selectedChallengeNameKey = "selectedChallengeName"
 
     private func continueTimestampKey(for scheme: String) -> String {
         return "continueTimestamp_\(scheme)"
@@ -86,20 +85,10 @@ class UserDefaultsService {
         return times
     }
     
-    var timingMode: String {
-        get { UserDefaults.standard.string(forKey: timingModeKey) ?? "default" }
+    var selectedChallengeName: String {
+        get { UserDefaults.standard.string(forKey: selectedChallengeNameKey) ?? "RandomText" }
         set {
-            UserDefaults.standard.set(newValue, forKey: timingModeKey)
-        }
-    }
-    
-    var verificationCodeLength: Int {
-        get { 
-            let length = UserDefaults.standard.integer(forKey: verificationCodeLengthKey)
-            return length > 0 ? length : 4
-        }
-        set {
-            UserDefaults.standard.set(newValue, forKey: verificationCodeLengthKey)
+            UserDefaults.standard.set(newValue, forKey: selectedChallengeNameKey)
         }
     }
     

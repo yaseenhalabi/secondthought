@@ -34,10 +34,8 @@ struct ContentView: View {
             } else if showContinueScreen {
                 ContinueScreen(
                     urlScheme: urlScheme,
-                    settings: settings,
-                    regenerationTrigger: codeRegenerationTrigger,
-                    onAppOpened: { scheme, customDelay in
-                        blockingManager.startMonitoring(for: scheme, timingMode: settings.timingMode, customDelay: customDelay)
+                    onAppOpened: { scheme, delay in
+                        blockingManager.startMonitoring(for: scheme, delay: delay)
                     }
                 )
             } else {
@@ -174,8 +172,6 @@ struct ContentView: View {
 #Preview("Unlock Screen") {
     ContinueScreen(
         urlScheme: "instagram://",
-        settings: AppSettings.shared,
-        regenerationTrigger: UUID(),
         onAppOpened: { _, _ in }
     )
 }

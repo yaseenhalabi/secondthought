@@ -37,12 +37,12 @@ class AppBlockingManager: AppBlockingManagerDelegate {
         unblockApp(scheme: urlScheme)
     }
     
-    func startMonitoring(for urlScheme: String, timingMode: TimingMode, customDelay: Double? = nil) {
+    func startMonitoring(for urlScheme: String, delay: Double? = nil) {
         guard tokenMapper.getToken(for: urlScheme, from: selectedApps) != nil else {
             return
         }
         
-        timerManager.startMonitoring(for: urlScheme, timingMode: timingMode, customDelay: customDelay)
+        timerManager.startMonitoring(for: urlScheme, delay: delay ?? 10.0)
     }
     
     private func updateShieldSettings() {

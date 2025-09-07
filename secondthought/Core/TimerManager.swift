@@ -52,10 +52,10 @@ class TimerManager {
         }
     }
     
-    func startMonitoring(for urlScheme: String, timingMode: TimingMode, customDelay: Double? = nil) {
+    func startMonitoring(for urlScheme: String, delay: Double) {
         cancelExistingTimers(for: urlScheme)
         
-        let blockDelay = calculateBlockDelay(mode: timingMode, customDelay: customDelay)
+        let blockDelay = delay
         let totalExpirationTime = blockDelay + 600 // 10 minutes after blocking
         
         scheduleBlockTimer(for: urlScheme, delay: blockDelay)
@@ -67,20 +67,7 @@ class TimerManager {
         saveState()
     }
     
-    private func calculateBlockDelay(mode: TimingMode, customDelay: Double?) -> Double {
-        if let customDelay = customDelay {
-            return customDelay
-        }
-        
-        switch mode {
-        case .defaultMode:
-            return 10.0
-        case .randomMode:
-            return Double.random(in: 1.0...10.0)
-        case .dynamicMode:
-            return 2.0 // fallback
-        }
-    }
+    
     
     private func scheduleBlockTimer(for urlScheme: String, delay: Double) {
         let blockWorkItem = DispatchWorkItem { [weak self] in

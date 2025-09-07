@@ -1,19 +1,9 @@
-//
-//  UnlockChallengesView.swift
-//  secondthought
-//
-//  Created by Yaseen Halabi on 8/8/25.
-//
-
 import Foundation
 import SwiftUI
 
 struct UnlockChallengesView: View {
-    let challenges: [any Challenge] = [
-        RandomTextChallenge(),
-        ChessPuzzleChallenge(),
-        BlackjackChallenge()
-    ]
+    @ObservedObject private var challengeService = ChallengeService.shared
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("Unlock Challenges").font(.headline)
@@ -21,8 +11,11 @@ struct UnlockChallengesView: View {
                 GridItem(.flexible(minimum: 40, maximum: .infinity)),
                 GridItem(.flexible(minimum: 40, maximum: .infinity))
             ], spacing: 8) {
-                ForEach(challenges, id: \.name) { challenge in
-                    ChallengeCard(challenge: challenge)
+                ForEach(challengeService.availableChallenges, id: \.name) { challenge in
+                    ChallengeCard(challenge: challenge, isSelected: challenge.name == challengeService.selectedChallenge.name)
+                        .onTapGesture {
+                            challengeService.selectedChallenge = challenge
+                        }
                 }
                 AddChallengeCard()
             }

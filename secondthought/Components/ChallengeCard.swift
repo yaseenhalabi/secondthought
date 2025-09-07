@@ -10,6 +10,7 @@ import SwiftUI
 
 struct ChallengeCard: View {
     let challenge: any Challenge
+    let isSelected: Bool
     
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
@@ -38,5 +39,9 @@ struct ChallengeCard: View {
             )
         )
         .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(isSelected ? Color.yellow : Color.clear, lineWidth: 3)
+        )
     }
 }
