@@ -1,5 +1,5 @@
 //
-//  ContentView.swift
+//  SettingsScreen.swift
 //  secondthought
 //
 //  Created by Yaseen Halabi on 7/26/25.
@@ -11,7 +11,7 @@ import FamilyControls
 import ManagedSettings
 
 
-struct ContentView: View {
+struct SettingsScreen: View {
     @State private var showContinueScreen = false
     @State private var urlScheme = ""
     @State private var hasRequestedPermissions = false
@@ -20,6 +20,7 @@ struct ContentView: View {
     @State private var codeRegenerationTrigger: UUID = UUID()
     
     @ObservedObject private var settings = AppSettings.shared
+    @ObservedObject private var challengeService = ChallengeService.shared
     
     private let blockingManager = AppBlockingManager.shared
     private let deviceActivityCenter = DeviceActivityCenter()
@@ -32,12 +33,11 @@ struct ContentView: View {
                     showAppSelector = false
                 }
             } else if showContinueScreen {
-                ContinueScreen(
-                    urlScheme: urlScheme,
-                    onAppOpened: { scheme, delay in
-                        blockingManager.startMonitoring(for: scheme, delay: delay)
-                    }
+                challengeService.view(
+                    for: challengeService.selectedChallenge, 
+                    urlScheme: urlScheme
                 )
+                .id(codeRegenerationTrigger)
             } else {
                 VStack(spacing: 16){
                     UnlockChallengesView()
@@ -159,19 +159,22 @@ struct ContentView: View {
 
 
 #Preview("On install") {
-    ContentView()
+    SettingsScreen()
 }
 
 #Preview("Home") {
-    ContentView().onAppear {
+    SettingsScreen().onAppear {
         AppSettings.shared.hasConfiguredApps = true
         
     }
 }
 
 #Preview("Unlock Screen") {
-    ContinueScreen(
-        urlScheme: "instagram://",
-        onAppOpened: { _, _ in }
-    )
+    struct ChallengePreview: View {
+        @ObservedObject private var challengeService = ChallengeService.shared
+        var body: some View {
+            challengeService.view(for: challengeService.selectedChallenge, urlScheme: "instagram://")
+        }
+    }
+    return ChallengePreview()
 }

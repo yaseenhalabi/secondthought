@@ -29,16 +29,16 @@ protocol Challenge: View {
 extension Challenge {
     
     @MainActor
-    func openApp(urlScheme: String, settings: AppSettings, onAppOpened: (String) -> Void) async {
-        
+    func openApp(urlScheme: String, customDelay: Double?) {
         guard let url = URL(string: urlScheme) else {
             return
         }
-        
-        settings.setContinueTimestamp(for: urlScheme)
-        
-        await UIApplication.shared.open(url)
-        
-        onAppOpened(urlScheme)
+
+        AppSettings.shared.setContinueTimestamp(for: urlScheme)
+
+        Task {
+            await UIApplication.shared.open(url)
+            ChallengeService.shared.challengeCompleted(urlScheme: urlScheme, customDelay: customDelay)
+        }
     }
 }

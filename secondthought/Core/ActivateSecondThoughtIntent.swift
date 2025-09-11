@@ -4,8 +4,6 @@ import UIKit
 import FamilyControls
 import ManagedSettings
 
-// NOTE: If you see 'Cannot find AppBlockingManager in scope', ensure 'AppBlockingManager.swift' is included in your Intents extension target.
-
 struct ActivateSecondThoughtIntent: AppIntent {
     static var title: LocalizedStringResource = "Activate Second Thought"
     static var description = IntentDescription("Activate Second Thought for an app")

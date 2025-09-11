@@ -11,7 +11,7 @@ import SwiftUI
 struct secondthoughtApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            SettingsScreen()
         }
     }
 }
