@@ -1,11 +1,11 @@
 import Foundation
 import FamilyControls
 import ManagedSettings
-import DeviceActivity
+
 class AppTokenMapper {
     static let shared = AppTokenMapper()
     
-    private let storage = UserDefaultsService.shared
+    private let settings = AppSettings.shared
     
     private var learnedMappings: [String: ApplicationToken] = [:]
     
@@ -26,7 +26,7 @@ class AppTokenMapper {
     ]
     
     func loadMappings() {
-        learnedMappings = storage.loadMappings()
+        learnedMappings = settings.loadMappings()
     }
     
     func getToken(for urlScheme: String, from selectedApps: FamilyActivitySelection) -> ApplicationToken? {
@@ -49,7 +49,7 @@ class AppTokenMapper {
     
     func learnToken(_ token: ApplicationToken, for urlScheme: String) {
         learnedMappings[urlScheme] = token
-        storage.saveMappings(learnedMappings)
+        settings.saveMappings(learnedMappings)
     }
     
     func getMappings() -> [String: ApplicationToken] {

@@ -6,9 +6,7 @@
 //
 
 import SwiftUI
-import DeviceActivity
 import FamilyControls
-import ManagedSettings
 
 
 struct SettingsScreen: View {
@@ -23,7 +21,6 @@ struct SettingsScreen: View {
     @ObservedObject private var challengeService = ChallengeService.shared
     
     private let blockingManager = AppBlockingManager.shared
-    private let deviceActivityCenter = DeviceActivityCenter()
     
     var body: some View {
         VStack {
@@ -142,13 +139,13 @@ struct SettingsScreen: View {
     
     
     private func saveAppConfiguration() {
-        UserDefaultsService.shared.saveSelectedApps(selectedApps)
+        settings.saveSelectedApps(selectedApps)
         settings.hasConfiguredApps = true
         blockingManager.initialize(with: selectedApps)
     }
     
     private func loadAppConfiguration() {
-        if let savedApps = UserDefaultsService.shared.loadSelectedApps() {
+        if let savedApps = settings.loadSelectedApps() {
             selectedApps = savedApps
             blockingManager.initialize(with: selectedApps)
         }

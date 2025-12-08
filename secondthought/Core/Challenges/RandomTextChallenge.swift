@@ -15,7 +15,7 @@ struct RandomTextChallenge: Challenge {
     @State private var hasAppeared: Bool = false
     @FocusState private var isInputFocused: Bool
 
-    private let verificationCodeLength = 15
+    private let verificationCodeLength = 1
     private let blockDelay = 10.0
 
     init() {
@@ -27,7 +27,8 @@ struct RandomTextChallenge: Challenge {
     }
 
     private func generateRandomCode() {
-        let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+//        let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+        let characters = "g"
         generatedCode = String((0..<verificationCodeLength).map { _ in characters.randomElement()! })
     }
 

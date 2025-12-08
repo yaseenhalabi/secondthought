@@ -8,15 +8,6 @@
 import Foundation
 import SwiftUI
 
-//struct Challenge: Identifiable {
-//      let id = UUID()
-//      let title: String
-//      let description: String
-//      let icon: String
-//      let isStarred: Bool
-//  }
-
-
 protocol Challenge: View {
     var name: String { get } // unique
     var displayName: String { get }

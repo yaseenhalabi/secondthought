@@ -1,119 +1,46 @@
 import Foundation
 import FamilyControls
-import ManagedSettings
 
-class AppBlockingManager: AppBlockingManagerDelegate {
+class AppBlockingManager {
     static let shared = AppBlockingManager()
     
-    private let storage = UserDefaultsService.shared
+    private let settings = AppSettings.shared
     private let tokenMapper = AppTokenMapper.shared
-    private let timerManager = TimerManager.shared
     
-    private let managedSettings = ManagedSettingsStore(named: .init("SecondThoughtStore"))
-    
-    private var blockedApps: Set<ApplicationToken> = []
     private var selectedApps = FamilyActivitySelection()
     
     private init() {
-        timerManager.blockingDelegate = self
         restoreState()
     }
     
     func initialize(with selectedApps: FamilyActivitySelection) {
         self.selectedApps = selectedApps
-    }
-    
-    func restoreState() {
-        blockedApps = storage.loadBlockedTokens()
-        if let savedApps = storage.loadSelectedApps() {
-            selectedApps = savedApps
-        }
-        
-        updateShieldSettings()
-        timerManager.restoreState()
-    }
-    
-    func unblockAppForScheme(_ urlScheme: String) {
-        unblockApp(scheme: urlScheme)
-    }
-    
-    func startMonitoring(for urlScheme: String, delay: Double? = nil) {
-        guard tokenMapper.getToken(for: urlScheme, from: selectedApps) != nil else {
-            return
-        }
-        
-        timerManager.startMonitoring(for: urlScheme, delay: delay ?? 10.0)
-    }
-    
-    private func updateShieldSettings() {
-        let authStatus = AuthorizationCenter.shared.authorizationStatus
-        guard authStatus == .approved else {
-            return
-        }
-        
-        let shieldValue = blockedApps.isEmpty ? nil : blockedApps
-        managedSettings.shield.applications = shieldValue
-    }
-    
-    private func saveState() {
-        storage.saveBlockedTokens(blockedApps)
-    }
-    
-    func isAppBlocked(scheme: String) -> Bool {
-        guard let token = tokenMapper.getToken(for: scheme, from: selectedApps) else {
-            return false
-        }
-        return blockedApps.contains(token)
-    }
-    
-    func unblockAllApps() {
-        blockedApps.removeAll()
-        timerManager.cancelAllTimers()
-        updateShieldSettings()
         saveState()
     }
     
+    func restoreState() {
+        if let savedApps = settings.loadSelectedApps() {
+            selectedApps = savedApps
+        }
+    }
+    
+    private func saveState() {
+        settings.saveSelectedApps(selectedApps)
+    }
+    
     func resetConfiguration() {
-        unblockAllApps()
         selectedApps = FamilyActivitySelection()
         tokenMapper.loadMappings()
-        storage.resetConfiguration()
+        settings.resetConfiguration()
     }
     
     func validateConfiguration() -> Bool {
         let hasValidApps = !selectedApps.applications.isEmpty
         return hasValidApps
     }
+    
+    func getSelectedApps() -> FamilyActivitySelection {
+        return selectedApps
+    }
 }
 
-extension AppBlockingManager {
-    func blockApp(scheme: String) {
-        guard let token = tokenMapper.getToken(for: scheme, from: selectedApps) else {
-            return
-        }
-        
-        let wasInserted = blockedApps.insert(token).inserted
-        
-        if wasInserted {
-            updateShieldSettings()
-            saveState()
-        }
-    }
-    
-    func unblockApp(scheme: String) {
-        guard let token = tokenMapper.getToken(for: scheme, from: selectedApps) else {
-            return
-        }
-        
-        let wasRemoved = blockedApps.remove(token) != nil
-        
-        if wasRemoved {
-            updateShieldSettings()
-            saveState()
-        }
-    }
-    
-    func unblockExpiredApp(scheme: String) {
-        unblockApp(scheme: scheme)
-    }
-}

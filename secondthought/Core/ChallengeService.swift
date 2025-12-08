@@ -6,10 +6,9 @@ import Combine
 class ChallengeService: ObservableObject {
     static let shared = ChallengeService()
     
-    private let blockingManager = AppBlockingManager.shared
     @Published var selectedChallenge: (any Challenge) {
         didSet {
-            UserDefaultsService.shared.selectedChallengeName = selectedChallenge.name
+            AppSettings.shared.selectedChallengeName = selectedChallenge.name
         }
     }
     let availableChallenges: [any Challenge] = [
@@ -19,7 +18,7 @@ class ChallengeService: ObservableObject {
     ]
 
     private init() {
-        let savedChallengeName = UserDefaultsService.shared.selectedChallengeName
+        let savedChallengeName = AppSettings.shared.selectedChallengeName
         if let challenge = availableChallenges.first(where: { $0.name == savedChallengeName }) {
             self.selectedChallenge = challenge
         } else {
@@ -28,7 +27,7 @@ class ChallengeService: ObservableObject {
     }
     
     func challengeCompleted(urlScheme: String, customDelay: Double?) {
-        blockingManager.startMonitoring(for: urlScheme, delay: customDelay)
+        // Challenge completed logic
     }
 
     @ViewBuilder
