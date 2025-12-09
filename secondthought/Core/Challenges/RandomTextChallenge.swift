@@ -83,6 +83,8 @@ struct RandomTextChallenge: Challenge {
                 validateInput()
                 if isCodeCorrect {
                     if let urlScheme {
+                        AppBlockingManager.shared.unblockAllApps()
+                        AppBlockingManager.shared.startBlockingIntervalForAllApps(duration: 20)
                         openApp(urlScheme: urlScheme, customDelay: blockDelay)
                     }
                 }
