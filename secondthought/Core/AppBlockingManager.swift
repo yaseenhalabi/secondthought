@@ -34,7 +34,7 @@ class AppBlockingManager {
         settings.resetConfiguration()
     }
     
-    func validateConfiguration() -> Bool {
+    func isValidConfiguration() -> Bool {
         let hasValidApps = !selectedApps.applications.isEmpty
         return hasValidApps
     }

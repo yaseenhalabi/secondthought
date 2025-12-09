@@ -130,7 +130,7 @@ struct SettingsScreen: View {
         if settings.hasConfiguredApps {
             loadAppConfiguration()
             
-            if !blockingManager.validateConfiguration() {
+            if !blockingManager.isValidConfiguration() {
                 blockingManager.resetConfiguration()
                 settings.hasConfiguredApps = false
             }
